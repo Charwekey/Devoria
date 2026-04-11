@@ -12,7 +12,7 @@ from sqlalchemy.orm import relationship
 from models.base import Base
 from utils.uuid_generator import generative_uuid
 
-class Users(Base):
+class User(Base):
     __tablename__ = "users"
 
     id = Column(String(60), primary_key=True, default=generative_uuid)
@@ -24,3 +24,15 @@ class Users(Base):
 
     #classescreated
     classes_created = relationship("Classes", back_populates="instructor")
+
+    #enrolled
+    class_student = relationship("ClassStudent", back_populates="students")
+
+    #attendance
+    attendance = relationship("Attendance", back_populates="students")
+
+    #submissions
+    submissions = relationship("Submissions", back_populates="students")
+
+    #projects 
+    projects = relationship("Projects", back_populates="students")
