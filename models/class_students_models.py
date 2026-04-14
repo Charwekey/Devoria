@@ -8,10 +8,9 @@ class ClassStudent(Base):
 
     id = Column(String(60), primary_key=True, default=generative_uuid)
 
-    students_id = Column(String(60), ForeignKey("users.id"))
+    student_id = Column(String(60), ForeignKey("users.id"))
     class_id = Column(String(60), ForeignKey("classes.id"))
 
-
-#relationship
-    student = relationship("User", back_populates="class_student")
-    classes = relationship("Class", back_populates="class_student")
+    # RELATIONSHIPS
+    student = relationship("User", back_populates="class_students")
+    classes = relationship("Class", back_populates="students")

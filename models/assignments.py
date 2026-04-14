@@ -1,8 +1,8 @@
-from sqlalchemy import Column,  Integer, String, ForeignKey
+from sqlalchemy import Column, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from models.base import Base
 from utils.uuid_generator import generative_uuid
-from datetime import datetime
+
 
 class Assignment(Base):
     __tablename__ = "assignments"
@@ -15,7 +15,6 @@ class Assignment(Base):
 
     class_id = Column(String(60), ForeignKey("classes.id"))
 
-    #relationships
-
-    classes_created = relationship("Class", back_populates="assignments")
-    submissions = relationship("Submission", back_populates="assignments")
+    # RELATIONSHIPS
+    classes = relationship("Class", back_populates="assignments")
+    submissions = relationship("Submission", back_populates="assignment")
