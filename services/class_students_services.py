@@ -1,6 +1,6 @@
-from models.class_student import ClassStudent
-from models.class_model import Class
-from models.users_models import Users
+from models.class_students_models import ClassStudent
+from models.classes_models import Class
+from models.users_models import User
 from fastapi import HTTPException
 from utils.connections import db_session
 

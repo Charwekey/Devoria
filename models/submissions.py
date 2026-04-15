@@ -1,8 +1,8 @@
-from sqlalchemy import Column,  Integer, String, ForeignKey
+from sqlalchemy import Column,  Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from models.base import Base
 from utils.uuid_generator import generative_uuid
-from sqlalchemy import datetime
+
 
 class Submission(Base):
     __tablename__ = "submissions"

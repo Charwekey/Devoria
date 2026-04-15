@@ -1,5 +1,5 @@
-from models.assignment import Assignment
-from models.class_model import Class
+from models.assignments import Assignment
+from models.classes_models import Class
 from fastapi import HTTPException
 from utils.connections import db_session
 
@@ -58,6 +58,14 @@ class AssignmentService:
     def get_assignment_by_id(self, assignment_id):
 
         assignment = self.session.query(Assignment).filter_by(id=assignment_id).first()
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+
+        return assignment
+
+    #Get assignment by title
+    def get_assignment_by_title(self, title):
+        assignment = self.session.query(Assignment).filter_by(title=title).first()
         if not assignment:
             raise HTTPException(status_code=404, detail="Assignment not found")
 
