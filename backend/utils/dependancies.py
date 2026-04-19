@@ -5,6 +5,7 @@ from utils.auth import decode_access_token
 from utils.connections import SessionLocal
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/users/login", auto_error=False)
 
 def get_db():
     db = SessionLocal()
@@ -33,3 +34,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get_db)):
         raise credentials_exception
         
     return user
+
+def get_current_user_optional(token: str = Depends(oauth2_scheme_optional), db = Depends(get_db)):
+    try:
+        payload = decode_access_token(token)
+        if payload is None:
+            return None
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+        return db.query(User).filter_by(id=user_id).first()
+    except:
+        return None

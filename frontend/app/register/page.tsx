@@ -4,7 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/services/api";
@@ -20,6 +20,7 @@ export default function Register() {
     role: "student",
     track: "frontend"
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,7 +72,23 @@ export default function Register() {
             
             <div>
               <label className="text-small" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Password</label>
-              <input required type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid var(--color-border)", outline: "none" }} />
+              <div style={{ position: "relative" }}>
+                <input 
+                  required 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  value={formData.password} 
+                  onChange={e => setFormData({...formData, password: e.target.value})} 
+                  style={{ width: "100%", padding: "0.75rem 2.5rem 0.75rem 0.75rem", borderRadius: "0.5rem", border: "1px solid var(--color-border)", outline: "none" }} 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--color-text-subtle)", display: "flex", alignItems: "center" }}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div className="grid-cols-2" style={{ gap: "1rem" }}>

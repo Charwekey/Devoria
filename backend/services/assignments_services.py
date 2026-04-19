@@ -1,3 +1,9 @@
+import os
+import shutil
+import uuid
+import fitz  # PyMuPDF
+from PIL import Image
+from datetime import datetime, time
 from models.assignments import Assignment
 from models.classes_models import Class
 from fastapi import HTTPException
@@ -6,9 +12,17 @@ from fastapi import HTTPException
 class AssignmentService:
     def __init__(self, session):
         self.session = session
+        self.static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+        self.upload_dir = os.path.join(self.static_dir, "uploads", "assignments")
+        self.files_dir = os.path.join(self.upload_dir, "files")
+        self.previews_dir = os.path.join(self.upload_dir, "previews")
+
+        # Ensure directories exist
+        os.makedirs(self.files_dir, exist_ok=True)
+        os.makedirs(self.previews_dir, exist_ok=True)
 
     #  CREATE ASSIGNMENT
-    def create_assignment(self, user, class_id, title, description, file_url, deadline):
+    def create_assignment(self, user, class_id, title, description, file, deadline, is_final_project=0):
 
         # Check role
         if user.role != "instructor":
@@ -32,13 +46,67 @@ class AssignmentService:
         if existing:
             raise HTTPException(status_code=400, detail="Assignment with this title already exists")
 
+        # Handle File Upload
+        file_url = None
+        preview_url = None
+
+        if file:
+            file_extension = os.path.splitext(file.filename)[1]
+            unique_name = f"{uuid.uuid4()}{file_extension}"
+            file_path = os.path.join(self.files_dir, unique_name)
+
+            # Save file
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            file_url = f"/static/uploads/assignments/files/{unique_name}"
+
+            # Generate Preview
+            preview_name = f"{uuid.uuid4()}.png"
+            preview_path = os.path.join(self.previews_dir, preview_name)
+
+            try:
+                if file_extension.lower() == ".pdf":
+                    # Generate PDF Preview (first page)
+                    doc = fitz.open(file_path)
+                    if len(doc) > 0:
+                        page = doc.load_page(0)
+                        pix = page.get_pixmap()
+                        pix.save(preview_path)
+                    doc.close()
+                    preview_url = f"/static/uploads/assignments/previews/{preview_name}"
+                
+                elif file_extension.lower() in [".jpg", ".jpeg", ".png", ".webp"]:
+                    # Generate Image Preview (resized)
+                    with Image.open(file_path) as img:
+                        img.thumbnail((400, 400))
+                        img.save(preview_path)
+                    preview_url = f"/static/uploads/assignments/previews/{preview_name}"
+            except Exception as e:
+                print(f"Failed to generate preview: {e}")
+                # We don't fail the whole request if preview fails
+                preview_url = None
+
+        # Normalizing deadline (set to end of day if only date is provided)
+        clean_deadline = deadline
+        if isinstance(deadline, str) and deadline:
+            try:
+                # If it's just YYYY-MM-DD
+                dt = datetime.strptime(deadline, "%Y-%m-%d")
+                clean_deadline = datetime.combine(dt.date(), time(23, 59, 59))
+            except ValueError:
+                # If it's already a full ISO string, keep as is
+                pass
+
         # Create assignment
         assignment = Assignment(
             title=title,
             description=description,
             file_url=file_url,
-            deadline=deadline,
-            class_id=class_id
+            preview_url=preview_url,
+            deadline=clean_deadline,
+            class_id=class_id,
+            is_final_project=is_final_project
         )
 
         self.session.add(assignment)
@@ -91,10 +159,16 @@ class AssignmentService:
             raise HTTPException(status_code=403, detail="Not your assignment")
 
         # Update fields
-        allowed_fields = ["title", "description", "file_url", "deadline"]
+        allowed_fields = ["title", "description", "file_url", "deadline", "is_final_project"]
 
         for key, value in kwargs.items():
             if key in allowed_fields and value is not None:
+                if key == "deadline" and isinstance(value, str) and value:
+                    try:
+                        dt = datetime.strptime(value, "%Y-%m-%d")
+                        value = datetime.combine(dt.date(), time(23, 59, 59))
+                    except ValueError:
+                        pass
                 setattr(assignment, key, value)
 
         self.session.commit()

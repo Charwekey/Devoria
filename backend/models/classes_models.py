@@ -11,6 +11,7 @@ class Class(Base):
     class_name = Column(String(60), nullable=False)
     track = Column(String(60), nullable=False)
     class_code = Column(String(60), unique=True)
+    total_classes = Column(Integer, default=24)
 
     instructor_id = Column(String(60), ForeignKey("users.id"))
 

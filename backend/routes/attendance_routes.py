@@ -10,6 +10,7 @@ class AttendanceCreate(BaseModel):
     class_id: str
     student_id: str
     status: str
+    slot: int | None = None
 
 #  MARK ATTENDANCE
 @router.post("/")
@@ -19,7 +20,13 @@ def mark_attendance(
     db: Session = Depends(get_db)
 ):
     attendance_service = AttendanceService(db)
-    return attendance_service.mark_attendance(user, data.class_id, data.student_id, data.status)
+    return attendance_service.mark_attendance(
+        user, 
+        data.class_id, 
+        data.student_id, 
+        data.status,
+        slot=data.slot
+    )
 
 
 #  GET CLASS ATTENDANCE (Instructor)

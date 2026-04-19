@@ -41,7 +41,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             "last_name": user.last_name,
             "email": user.email,
             "role": user.role,
-            "track": user.track
+            "track": user.track,
+            "is_verified": bool(user.is_verified),
+            "is_admin": bool(user.is_admin)
         }
     }
 
@@ -54,10 +56,12 @@ def get_user_me(current_user = Depends(get_current_user)):
         "last_name": current_user.last_name,
         "email": current_user.email,
         "role": current_user.role,
-        "track": current_user.track
+        "track": current_user.track,
+        "is_verified": bool(current_user.is_verified),
+        "is_admin": bool(current_user.is_admin)
     }
 
-# criando a user(registration)
+# whitelist registration payload
 class UserCreate(BaseModel):
     first_name: str
     last_name: str

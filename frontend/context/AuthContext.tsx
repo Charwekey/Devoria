@@ -12,6 +12,8 @@ interface User {
   email: string;
   role: string;
   track: string;
+  is_verified: boolean;
+  is_admin: boolean;
 }
 
 interface AuthContextType {
@@ -38,10 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const res = await api.get('/users/me');
-        setUser(res.data);
+        const userData = res.data;
+        setUser(userData);
       } catch (err) {
         console.error("Auth check failed:", err);
-        // Only wipe token if it's a definitive 401/403
         if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
           localStorage.removeItem('access_token');
           setUser(null);
@@ -57,8 +59,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (token: string, userData: User) => {
     localStorage.setItem('access_token', token);
     setUser(userData);
-    if (userData.role === 'instructor') {
+
+    // Redirection Logic
+    if (!userData.is_verified && !userData.is_admin && userData.role !== 'student') {
+      router.push('/pending-approval');
+    } else if (userData.is_admin || userData.role === 'admin') {
+      router.push('/dashboard/admin');
+    } else if (userData.role === 'instructor') {
       router.push('/dashboard/instructor');
+    } else if (userData.role === 'assistant') {
+      router.push('/dashboard/assistant');
     } else {
       router.push('/dashboard/student');
     }

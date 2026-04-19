@@ -12,6 +12,17 @@ class Project(Base):
     github_link = Column(String(255))
     demo_link = Column(String(255))
     
-    students_id = Column(String(60), ForeignKey("users.id"))
+    student_id = Column("students_id", String(60), ForeignKey("users.id"))
 
     student = relationship("User", back_populates= "projects")
+    likes = relationship("ProjectLike", back_populates="project", cascade="all, delete-orphan")
+
+class ProjectLike(Base):
+    __tablename__ = "project_likes"
+    id = Column(String(60), primary_key=True, default=generative_uuid)
+    project_id = Column(String(60), ForeignKey("projects.id"), nullable=False)
+    student_id = Column(String(60), ForeignKey("users.id"), nullable=True)
+    ip_address = Column(String(45), nullable=True) # Support IPv6
+
+    project = relationship("Project", back_populates="likes")
+    student = relationship("User") 

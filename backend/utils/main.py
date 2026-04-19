@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 
 # import all routes
 from routes import (
@@ -9,7 +11,9 @@ from routes import (
     submissions_routes,
     projects_routes,
     attendance_routes,
-    class_students_routes
+    class_students_routes,
+    admin_routes,
+    instructor_routes
 )
 
 app = FastAPI()
@@ -37,15 +41,82 @@ def ensure_schema_sync():
             connection.commit()
             print("Successfully added missing 'status' column.")
     except Exception as e:
-        # If the column already exists, MySQL returns code 1060
-        if "Duplicate column name" in str(e) or "1060" in str(e):
-            print("Schema is already up to date. No action needed.")
-        else:
-            print(f"Schema sync warning: {e}")
+        if "Duplicate column name" not in str(e) and "1060" not in str(e):
+            print(f"Schema sync warning (class_student): {e}")
 
-# Apply migrations and create tables
-Base.metadata.create_all(bind=engine)
-ensure_schema_sync()
+    # Assignments Table Sync
+    try:
+        with engine.connect() as connection:
+            print("Syncing 'assignments' table...")
+            # Change description to TEXT
+            connection.execute(text("ALTER TABLE assignments MODIFY description TEXT"))
+            # Add preview_url if missing
+            try:
+                connection.execute(text("ALTER TABLE assignments ADD COLUMN preview_url VARCHAR(255)"))
+            except Exception as e:
+                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                    raise e
+            connection.commit()
+            print("Successfully synced 'assignments' table.")
+    except Exception as e:
+        print(f"Schema sync warning (assignments): {e}")
+
+    # Classes Table Sync
+    try:
+        with engine.connect() as connection:
+            print("Syncing 'classes' table...")
+            try:
+                connection.execute(text("ALTER TABLE classes ADD COLUMN total_classes INT DEFAULT 24"))
+            except Exception as e:
+                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                    raise e
+            connection.commit()
+            print("Successfully synced 'classes' table.")
+    except Exception as e:
+        print(f"Schema sync warning (classes): {e}")
+
+    # Attendance Table Sync
+    try:
+        with engine.connect() as connection:
+            print("Syncing 'attendance' table...")
+            try:
+                connection.execute(text("ALTER TABLE attendance ADD COLUMN slot INT NULL"))
+            except Exception as e:
+                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                    raise e
+            connection.commit()
+            print("Successfully synced 'attendance' table.")
+    except Exception as e:
+        print(f"Schema sync warning (attendance): {e}")
+
+    # Submissions Table Sync
+    try:
+        with engine.connect() as connection:
+            print("Syncing 'submissions' table...")
+            # Add submission_file_url if missing
+            try:
+                connection.execute(text("ALTER TABLE submissions ADD COLUMN submission_file_url VARCHAR(255) NULL"))
+            except Exception as e:
+                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                    raise e
+            
+            # Add submitted_at if missing
+            try:
+                connection.execute(text("ALTER TABLE submissions ADD COLUMN submitted_at DATETIME NULL"))
+            except Exception as e:
+                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                    raise e
+            
+            # Modify submission_link to be optional
+            try:
+                connection.execute(text("ALTER TABLE submissions MODIFY COLUMN submission_link VARCHAR(255) NULL"))
+            except Exception as e:
+                print(f"Submissions sync Link Nullable Warning: {e}")
+
+            connection.commit()
+            print("Successfully synced 'submissions' table.")
+    except Exception as e:
+        print(f"Schema sync warning (submissions): {e}")
 
 # include routers
 app.include_router(user_routes.router)
@@ -55,3 +126,20 @@ app.include_router(submissions_routes.router)
 app.include_router(projects_routes.router)
 app.include_router(attendance_routes.router)
 app.include_router(class_students_routes.router)
+app.include_router(admin_routes.router)
+app.include_router(instructor_routes.router)
+
+# Mount static files
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.on_event("startup")
+def startup_event():
+    # Apply migrations and create tables ONLY on app startup
+    print("Starting database schema synchronization...")
+    Base.metadata.create_all(bind=engine)
+    ensure_schema_sync()
+    print("Database schema synchronization complete.")

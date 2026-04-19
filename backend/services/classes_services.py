@@ -32,10 +32,8 @@ class ClassService:
         assignments = self.session.query(Assignment).filter_by(class_id=class_id).all()
         total_assignments = len(assignments)
 
-        # 3. Get total attendance sessions for this class (approximate by distinct dates in attendance table for this class)
-        # In a more robust system, we'd have a 'Sessions' table. For now, we count unique dates.
-        total_sessions = self.session.query(Attendance.date).filter_by(class_id=class_id).distinct().count()
-        if total_sessions == 0: total_sessions = 1 # Avoid division by zero
+        # 3. Use total_classes from the class object for calculation
+        total_sessions = class_obj.total_classes if class_obj.total_classes > 0 else 24
 
         analytics_data = []
 
@@ -43,15 +41,16 @@ class ClassService:
             student = enrollment.student
             
             # Attendance Rate
-            present_count = self.session.query(Attendance).filter_by(
+            present_records = self.session.query(Attendance).filter_by(
                 student_id=student.id,
                 class_id=class_id,
                 status="present"
-            ).count()
+            ).all()
+            
+            present_count = len(present_records)
             attendance_rate = (present_count / total_sessions) * 100
 
             # Grade Average
-            # Get all submissions by this student for assignments in this class
             assignment_ids = [a.id for a in assignments]
             submissions = self.session.query(Submission).filter(
                 Submission.student_id == student.id,
@@ -59,9 +58,6 @@ class ClassService:
             ).all()
 
             sum_scores = sum([float(s.score) for s in submissions if s.score is not None])
-            
-            # User suggested "Assignment completion basically the average"
-            # We treat total_assignments as the denominator to account for 0s on unskipped work
             grade_average = (sum_scores / total_assignments) if total_assignments > 0 else 0
 
             analytics_data.append({
@@ -70,13 +66,18 @@ class ClassService:
                 "track": student.track,
                 "attendance_rate": round(min(attendance_rate, 100), 1),
                 "grade_average": round(min(grade_average, 100), 1),
-                "submission_count": len(submissions)
+                "submission_count": len(submissions),
+                "attendance_records": [
+                    {"slot": a.slot, "status": a.status, "date": a.date} for a in 
+                    self.session.query(Attendance).filter_by(student_id=student.id, class_id=class_id).all()
+                ]
             })
 
         return {
             "class_name": class_obj.class_name,
             "total_students": len(students),
             "total_assignments": total_assignments,
+            "total_classes": total_sessions,
             "students": analytics_data
         }
 

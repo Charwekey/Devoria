@@ -1,6 +1,7 @@
 from models.users_models import User
 from fastapi import HTTPException
 from utils.auth import get_password_hash
+from utils.uuid_generator import generative_uuid
 
 class UserService:
     def __init__(self, session):
@@ -8,22 +9,62 @@ class UserService:
 
     # Create user
     def create_user(self, first_name, last_name, email, password, role, track):
+        from models.users_models import Whitelist, AssistantPermission
         email = email.lower().strip()
+        
         # check if user already exists
         existing_user = self.session.query(User).filter_by(email=email).first()
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already exists")
 
+        is_verified = 0
+        is_admin = 0
+        final_role = role
+        final_track = track
+
+        # BOOTSTRAP ADMIN
+        if email == "admin@devoria.com":
+            is_verified = 1
+            is_admin = 1
+            final_role = "admin"
+        else:
+            # CHECK WHITELIST
+            whitelist_entry = self.session.query(Whitelist).filter_by(email=email).first()
+            if not whitelist_entry:
+                raise HTTPException(
+                    status_code=403, 
+                    detail="Unauthorized: Your email is not whitelisted for this cohort."
+                )
+            
+            # Force role/track from whitelist to prevent tampering
+            final_role = whitelist_entry.role
+            final_track = whitelist_entry.track
+            
+            # Students are verified immediately; Staff require admin approval
+            if final_role == "student":
+                is_verified = 1
+            
+            whitelist_entry.is_used = 1
+
         new_user = User(
+            id=generative_uuid(),
             first_name=first_name,
             last_name=last_name,
             email=email,
-            password=get_password_hash(password),  # unified hashing
-            role=role,
-            track=track
+            password=get_password_hash(password),
+            role=final_role,
+            track=final_track,
+            is_verified=is_verified,
+            is_admin=is_admin
         )
 
         self.session.add(new_user)
+        
+        # If it's an assistant, create default permissions
+        if final_role == "assistant":
+            perms = AssistantPermission(user_id=new_user.id)
+            self.session.add(perms)
+
         self.session.commit()
         self.session.refresh(new_user)
 

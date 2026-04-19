@@ -9,7 +9,7 @@ class AttendanceService:
         self.session = session
 
     #  MARK ATTENDANCE (Instructor)
-    def mark_attendance(self, user, class_id, student_id, status):
+    def mark_attendance(self, user, class_id, student_id, status, slot=None, date=None):
 
         if user.role != "instructor":
             raise HTTPException(status_code=403, detail="Only instructors can mark attendance")
@@ -32,26 +32,50 @@ class AttendanceService:
         if not enrolled:
             raise HTTPException(status_code=403, detail="Student not in this class")
 
-        # Prevent duplicate for same day
-        today = datetime.utcnow().date()
+        # Handle Slot-based Attendance (Spreadsheet)
+        if slot is not None:
+            existing = self.session.query(Attendance).filter_by(
+                class_id=class_id,
+                student_id=student_id,
+                slot=slot
+            ).first()
 
-        existing = self.session.query(Attendance).filter(
-            Attendance.student_id == student_id,
-            Attendance.class_id == class_id,
-            Attendance.date >= datetime(today.year, today.month, today.day)
-        ).first()
+            if existing:
+                existing.status = status
+                existing.date = date if date else datetime.utcnow()
+                attendance = existing
+            else:
+                attendance = Attendance(
+                    class_id=class_id,
+                    student_id=student_id,
+                    date=date if date else datetime.utcnow(),
+                    slot=slot,
+                    status=status
+                )
+                self.session.add(attendance)
+        
+        else:
+            # Traditional Date-based Attendance (Legacy/Simple)
+            today = datetime.utcnow().date()
+            existing = self.session.query(Attendance).filter(
+                Attendance.student_id == student_id,
+                Attendance.class_id == class_id,
+                Attendance.slot == None, # Avoid double marking if using simple mode
+                Attendance.date >= datetime(today.year, today.month, today.day)
+            ).first()
 
-        if existing:
-            raise HTTPException(status_code=400, detail="Attendance already marked today")
+            if existing:
+                existing.status = status
+                attendance = existing
+            else:
+                attendance = Attendance(
+                    class_id=class_id,
+                    student_id=student_id,
+                    date=datetime.utcnow(),
+                    status=status
+                )
+                self.session.add(attendance)
 
-        attendance = Attendance(
-            class_id=class_id,
-            student_id=student_id,
-            date=datetime.utcnow(),
-            status=status
-        )
-
-        self.session.add(attendance)
         self.session.commit()
         self.session.refresh(attendance)
 

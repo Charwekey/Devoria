@@ -1,10 +1,35 @@
+"use client";
+
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { LayoutDashboard, Users, Trophy, ChevronRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // Redirect to dashboard if session exists
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.is_admin) router.push("/dashboard/admin");
+      else if (user.role === "instructor") router.push("/dashboard/instructor");
+      else if (user.role === "assistant") router.push("/dashboard/assistant");
+      else router.push("/dashboard/student");
+    }
+  }, [user, loading, router]);
+
+  // Prevent flash of landing page content for logged in users
+  if (loading || user) return (
+    <div className="flex-center" style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
+       <div className="text-body animate-pulse">Safely redirecting...</div>
+    </div>
+  );
+
   return (
     <>
       <Navbar />

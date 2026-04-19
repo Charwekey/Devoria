@@ -1,14 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from services.submissions_services import SubmissionService
 from utils.dependancies import get_current_user, get_db
 
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
-
-class SubmissionCreate(BaseModel):
-    assignment_id: str
-    file_url: str
 
 class SubmissionGrade(BaseModel):
     grade: str
@@ -18,12 +14,27 @@ class SubmissionGrade(BaseModel):
 #  SUBMIT ASSIGNMENT (Student)
 @router.post("/")
 def submit_assignment(
-    data: SubmissionCreate,
+    assignment_id: str = Form(...),
+    submission_link: str = Form(None),
+    project_title: str = Form(None),
+    project_description: str = Form(None),
+    github_link: str = Form(None),
+    demo_link: str = Form(None),
+    file: UploadFile = File(None),
     user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     submission_service = SubmissionService(db)
-    return submission_service.submit_assignment(user, data.assignment_id, data.file_url)
+    return submission_service.submit_assignment(
+        user, 
+        assignment_id, 
+        submission_link=submission_link,
+        file=file,
+        project_title=project_title,
+        project_description=project_description,
+        github_link=github_link,
+        demo_link=demo_link
+    )
 
 
 #  GET ALL SUBMISSIONS (Instructor)
