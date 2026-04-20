@@ -32,8 +32,30 @@ class AttendanceService:
         if not enrolled:
             raise HTTPException(status_code=403, detail="Student not in this class")
 
+        # Handle Date-based Attendance (for scheduled classes)
+        if date is not None:
+            # Use the provided date for the attendance record
+            existing = self.session.query(Attendance).filter(
+                Attendance.class_id == class_id,
+                Attendance.student_id == student_id,
+                Attendance.date >= datetime(date.year, date.month, date.day),
+                Attendance.date < datetime(date.year, date.month, date.day + 1)
+            ).first()
+
+            if existing:
+                existing.status = status
+                attendance = existing
+            else:
+                attendance = Attendance(
+                    class_id=class_id,
+                    student_id=student_id,
+                    date=date,
+                    status=status
+                )
+                self.session.add(attendance)
+        
         # Handle Slot-based Attendance (Spreadsheet)
-        if slot is not None:
+        elif slot is not None:
             existing = self.session.query(Attendance).filter_by(
                 class_id=class_id,
                 student_id=student_id,

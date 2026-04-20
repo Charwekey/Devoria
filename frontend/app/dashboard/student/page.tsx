@@ -135,7 +135,8 @@ export default function StudentDashboard() {
             {(enrollmentStatus.has_approved || classes.length > 0 || enrollmentStatus.has_pending) && (
               <>
                 <div className="grid-cols-3 gap-2" style={{ marginBottom: "3rem" }}>
-                  <Card style={{ padding: "1rem" }}>
+                  <div style={{ padding: "1rem" }}>
+                  <Card>
                     <div className="flex-between" style={{ marginBottom: "0.5rem" }}>
                       <span className="text-small" style={{ fontWeight: 600 }}>Overall Progress</span>
                       <Award size={16} color="var(--color-primary)" />
@@ -145,8 +146,10 @@ export default function StudentDashboard() {
                        <ProgressBar percentage={percentComplete} />
                     </div>
                   </Card>
+                  </div>
 
-                  <Card style={{ padding: "1rem" }}>
+                  <div style={{ padding: "1rem" }}>
+                  <Card>
                     <div className="flex-between" style={{ marginBottom: "0.5rem" }}>
                       <span className="text-small" style={{ fontWeight: 600 }}>Attendance</span>
                       <Calendar size={16} color="var(--color-accent-green)" />
@@ -154,8 +157,10 @@ export default function StudentDashboard() {
                     <h2 className="text-h2" style={{ fontSize: "1.75rem" }}>{attendance.length}</h2>
                     <p className="text-small">Sessions recorded</p>
                   </Card>
+                  </div>
 
-                  <Card style={{ padding: "1rem" }}>
+                  <div style={{ padding: "1rem" }}>
+                  <Card>
                     <div className="flex-between" style={{ marginBottom: "0.5rem" }}>
                       <span className="text-small" style={{ fontWeight: 600 }}>Projects</span>
                       <BookOpen size={16} color="var(--color-accent-purple)" />
@@ -163,6 +168,7 @@ export default function StudentDashboard() {
                     <h2 className="text-h2" style={{ fontSize: "1.75rem" }}>{projects.length}</h2>
                     <p className="text-small">Showcased works</p>
                   </Card>
+                  </div>
                 </div>
 
                 {/* Academic/Submission Section */}
@@ -171,7 +177,8 @@ export default function StudentDashboard() {
                 </div>
                 <div className="flex-column gap-1" style={{ marginBottom: "4rem" }}>
                    {submissions.length > 0 ? submissions.slice(0, 5).map((s: any) => (
-                      <Card key={s.id} style={{ padding: "1.25rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div key={s.id} style={{ padding: "1.25rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Card>
                           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
                              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "rgba(34, 197, 94, 0.1)", color: "var(--color-accent-green)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 <CheckCircle size={18} />
@@ -186,11 +193,14 @@ export default function StudentDashboard() {
                              <label className="text-small" style={{ fontSize: "0.6rem", fontWeight: 800, opacity: 0.4 }}>GRADE</label>
                           </div>
                       </Card>
+                      </div>
                    )) : (
-                      <Card style={{ padding: "3rem", textAlign: "center", opacity: 0.4 }}>
+                      <div style={{ padding: "3rem", textAlign: "center", opacity: 0.4 }}>
+                      <Card>
                          <FileText size={48} style={{ margin: "0 auto 1rem" }} />
                          <p>No coursework submitted yet.</p>
                       </Card>
+                      </div>
                    )}
                 </div>
 
@@ -202,22 +212,24 @@ export default function StudentDashboard() {
                 <div className="grid-cols-3 gap-2">
                   {classes.length > 0 ? (
                     classes.map((cls: any) => (
-                      <Card key={cls.id} className="animate-fade-in hover-lift" style={{ padding: "1.5rem", position: "relative", border: "1px solid var(--color-border)" }}>
-                        <div style={{ position: "absolute", top: 0, right: 0, padding: "0.5rem 1rem", background: "var(--color-primary-light)", color: "var(--color-primary)", borderBottomLeftRadius: "1rem" }}>
-                          <span className="text-small" style={{ fontWeight: 800, fontSize: "0.6rem" }}>{cls.track?.toUpperCase()}</span>
-                        </div>
-                        <h4 style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "1.5rem", color: "var(--color-text)" }}>{cls.class_name}</h4>
-                        <div style={{ marginBottom: "1.5rem" }}>
-                           <p className="text-small" style={{ fontSize: "0.7rem", opacity: 0.5, fontWeight: 700 }}>COHORT STATUS: ACTIVE</p>
-                        </div>
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ width: "100%", fontWeight: 700 }}
-                          onClick={() => router.push(`/dashboard/student/class/${cls.id}`)}
-                        >
-                          Launch Workspace
-                        </button>
-                      </Card>
+                      <div key={cls.id} style={{ padding: "1.5rem", position: "relative", border: "1px solid var(--color-border)" }}>
+                        <Card className="animate-fade-in hover-lift">
+                          <div style={{ position: "absolute", top: 0, right: 0, padding: "0.5rem 1rem", background: "var(--color-primary-light)", color: "var(--color-primary)", borderBottomLeftRadius: "1rem" }}>
+                            <span className="text-small" style={{ fontWeight: 800, fontSize: "0.6rem" }}>{cls.track?.toUpperCase()}</span>
+                          </div>
+                          <h4 style={{ fontWeight: 800, fontSize: "1.1rem", marginBottom: "1.5rem", color: "var(--color-text)" }}>{cls.class_name}</h4>
+                          <div style={{ marginBottom: "1.5rem" }}>
+                             <p className="text-small" style={{ fontSize: "0.7rem", opacity: 0.5, fontWeight: 700 }}>COHORT STATUS: ACTIVE</p>
+                          </div>
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ width: "100%", fontWeight: 700 }}
+                            onClick={() => router.push(`/dashboard/student/class/${cls.id}`)}
+                          >
+                            Launch Workspace
+                          </button>
+                        </Card>
+                      </div>
                     ))
                   ) : enrollmentStatus.has_pending ? (
                     <Card style={{ gridColumn: "span 3", padding: "4rem", textAlign: "center", background: "rgba(0,0,0,0.01)" }}>

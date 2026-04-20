@@ -187,44 +187,46 @@ export default function InstructorDashboard() {
                  </div>
                  
                  <form onSubmit={handleUpdateSettings}>
-                    <Card style={{ padding: "2.5rem" }}>
-                       <div className="grid-cols-2 gap-4" style={{ marginBottom: "2rem" }}>
-                          <div className="flex-column gap-1">
-                             <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>FIRST NAME</label>
-                             <input required value={settingsForm.first_name} onChange={e => setSettingsForm({...settingsForm, first_name: e.target.value})} className="terminal-input" style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} />
+                    <div style={{ padding: "2.5rem" }}>
+                       <Card>
+                          <div className="grid-cols-2 gap-4" style={{ marginBottom: "2rem" }}>
+                             <div className="flex-column gap-1">
+                                <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>FIRST NAME</label>
+                                <input required value={settingsForm.first_name} onChange={e => setSettingsForm({...settingsForm, first_name: e.target.value})} className="terminal-input" style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} />
+                             </div>
+                             <div className="flex-column gap-1">
+                                <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>LAST NAME</label>
+                                <input required value={settingsForm.last_name} onChange={e => setSettingsForm({...settingsForm, last_name: e.target.value})} className="terminal-input" style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} />
+                             </div>
                           </div>
-                          <div className="flex-column gap-1">
-                             <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>LAST NAME</label>
-                             <input required value={settingsForm.last_name} onChange={e => setSettingsForm({...settingsForm, last_name: e.target.value})} className="terminal-input" style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} />
+                          
+                          <div className="flex-column gap-1" style={{ marginBottom: "2rem" }}>
+                             <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>EMAIL ADDRESS</label>
+                             <input required type="email" value={settingsForm.email} onChange={e => setSettingsForm({...settingsForm, email: e.target.value})} className="terminal-input" style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} />
                           </div>
-                       </div>
-                       
-                       <div className="flex-column gap-1" style={{ marginBottom: "2rem" }}>
-                          <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>EMAIL ADDRESS</label>
-                          <input required type="email" value={settingsForm.email} onChange={e => setSettingsForm({...settingsForm, email: e.target.value})} className="terminal-input" style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} />
-                       </div>
 
-                       <div className="flex-column gap-1" style={{ marginBottom: "2.5rem" }}>
-                          <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>PASSWORD (LEAVE BLANK TO UNCHANGED)</label>
-                          <div style={{ position: "relative" }}>
-                             <input 
-                                type={showPass ? "text" : "password"} 
-                                value={settingsForm.password} 
-                                onChange={e => setSettingsForm({...settingsForm, password: e.target.value})} 
-                                className="terminal-input" 
-                                placeholder="••••••••"
-                                style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} 
-                             />
-                             <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer" }}>
-                                {showPass ? <EyeOff size={18} opacity={0.5} /> : <Eye size={18} opacity={0.5} />}
-                             </button>
+                          <div className="flex-column gap-1" style={{ marginBottom: "2.5rem" }}>
+                             <label className="text-small" style={{ fontWeight: 800, opacity: 0.6 }}>PASSWORD (LEAVE BLANK TO UNCHANGED)</label>
+                             <div style={{ position: "relative" }}>
+                                <input 
+                                   type={showPass ? "text" : "password"} 
+                                   value={settingsForm.password} 
+                                   onChange={e => setSettingsForm({...settingsForm, password: e.target.value})} 
+                                   className="terminal-input" 
+                                   placeholder="••••••••"
+                                   style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem" }} 
+                                />
+                                <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer" }}>
+                                   {showPass ? <EyeOff size={18} opacity={0.5} /> : <Eye size={18} opacity={0.5} />}
+                                </button>
+                             </div>
                           </div>
-                       </div>
 
-                       <button type="submit" disabled={saving} className="btn btn-primary" style={{ height: "3.5rem", width: "200px" }}>
-                          {saving ? "SAVING..." : "UPDATE PROFILE"}
-                       </button>
-                    </Card>
+                          <button type="submit" disabled={saving} className="btn btn-primary" style={{ height: "3.5rem", width: "200px" }}>
+                             {saving ? "SAVING..." : "UPDATE PROFILE"}
+                          </button>
+                       </Card>
+                    </div>
                  </form>
               </div>
             ) : (
@@ -234,73 +236,79 @@ export default function InstructorDashboard() {
                   <div className="grid-cols-3 gap-2" style={{ marginTop: "0.5rem" }}>
                     {classes.length > 0 ? (
                       classes.map((cls: any) => (
-                        <Card key={cls.id} className="obsidian-card animate-fade-in" style={{ padding: "1.5rem", position: "relative" }}>
-                          <div style={{ position: "absolute", top: 0, right: 0, padding: "0.5rem", background: "var(--color-terminal-indigo)", color: "white", borderBottomLeftRadius: "1rem" }}>
-                            <span className="text-small" style={{ fontWeight: 800, fontSize: "0.65rem" }}>{cls.track?.toUpperCase()}</span>
-                          </div>
-                          
-                          <div className="flex-between" style={{ marginBottom: "1rem" }}>
-                            <div style={{ background: "rgba(37, 99, 235, 0.05)", padding: "0.6rem", borderRadius: "0.5rem" }}>
-                              <Users size={20} color="var(--color-primary)" />
+                        <div key={cls.id} style={{ padding: "1.5rem", position: "relative" }}>
+                          <Card className="obsidian-card animate-fade-in">
+                            <div style={{ position: "absolute", top: 0, right: 0, padding: "0.5rem", background: "var(--color-terminal-indigo)", color: "white", borderBottomLeftRadius: "1rem" }}>
+                              <span className="text-small" style={{ fontWeight: 800, fontSize: "0.65rem" }}>{cls.track?.toUpperCase()}</span>
                             </div>
-                            {pendingRequests[cls.id]?.length > 0 && (
-                              <span style={{ background: "var(--color-error)", color: "white", padding: "0.2rem 0.5rem", borderRadius: "1rem", fontSize: "0.65rem", fontWeight: 800 }}>
-                                {pendingRequests[cls.id].length} PENDING
-                              </span>
-                            )}
-                          </div>
+                            
+                            <div className="flex-between" style={{ marginBottom: "1rem" }}>
+                              <div style={{ background: "rgba(37, 99, 235, 0.05)", padding: "0.6rem", borderRadius: "0.5rem" }}>
+                                <Users size={20} color="var(--color-primary)" />
+                              </div>
+                              {pendingRequests[cls.id]?.length > 0 && (
+                                <span style={{ background: "var(--color-error)", color: "white", padding: "0.2rem 0.5rem", borderRadius: "1rem", fontSize: "0.65rem", fontWeight: 800 }}>
+                                  {pendingRequests[cls.id].length} PENDING
+                                </span>
+                              )}
+                            </div>
 
-                          <h4 style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.25rem" }}>{cls.class_name}</h4>
-                          <div className="flex-between" style={{ marginBottom: "1.5rem" }}>
-                             <p className="text-small" style={{ opacity: 0.7, margin: 0 }}>Code: <strong style={{ letterSpacing: "0.05em" }}>{cls.class_code}</strong></p>
-                             <button className="btn btn-ghost" style={{ padding: "0.2rem" }} onClick={() => copyClassCode(cls.class_code)} title="Copy Code">
-                                <Copy size={12} />
-                             </button>
-                          </div>
-                          
-                          <button 
-                            className="btn-premium-indigo" 
-                            style={{ width: "100%", padding: "0.75rem", fontSize: "0.85rem", marginTop: "1rem" }}
-                            onClick={() => router.push(`/dashboard/instructor/class/${cls.id}`)}
-                          >
-                            Manage Environment
-                          </button>
-                        </Card>
+                            <h4 style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.25rem" }}>{cls.class_name}</h4>
+                            <div className="flex-between" style={{ marginBottom: "1.5rem" }}>
+                               <p className="text-small" style={{ opacity: 0.7, margin: 0 }}>Code: <strong style={{ letterSpacing: "0.05em" }}>{cls.class_code}</strong></p>
+                               <button className="btn btn-ghost" style={{ padding: "0.2rem" }} onClick={() => copyClassCode(cls.class_code)} title="Copy Code">
+                                  <Copy size={12} />
+                               </button>
+                            </div>
+                            
+                            <button 
+                              className="btn-premium-indigo" 
+                              style={{ width: "100%", padding: "0.75rem", fontSize: "0.85rem", marginTop: "1rem" }}
+                              onClick={() => router.push(`/dashboard/instructor/class/${cls.id}`)}
+                            >
+                              Manage Environment
+                            </button>
+                          </Card>
+                        </div>
                       ))
                     ) : (
-                      <Card style={{ gridColumn: "span 3", padding: "3rem", textAlign: "center", border: "2px dashed var(--color-border)" }}>
-                        <Plus size={48} style={{ marginBottom: "1rem", opacity: 0.2, margin: "0 auto" }} />
-                        <h4 className="text-h3">Ready to start?</h4>
-                        <p className="text-small" style={{ maxWidth: "400px", margin: "0.5rem auto", marginBottom: "1.5rem" }}>
-                          Create your first class cohort to start tracking attendance and assignments.
-                        </p>
-                        <button className="btn btn-primary" onClick={() => setShowClassModal(true)}>Create Your First Class</button>
-                      </Card>
+                      <div style={{ gridColumn: "span 3", padding: "3rem", textAlign: "center", border: "2px dashed var(--color-border)" }}>
+                        <Card>
+                          <Plus size={48} style={{ marginBottom: "1rem", opacity: 0.2, margin: "0 auto" }} />
+                          <h4 className="text-h3">Ready to start?</h4>
+                          <p className="text-small" style={{ maxWidth: "400px", margin: "0.5rem auto", marginBottom: "1.5rem" }}>
+                            Create your first class cohort to start tracking attendance and assignments.
+                          </p>
+                          <button className="btn btn-primary" onClick={() => setShowClassModal(true)}>Create Your First Class</button>
+                        </Card>
+                      </div>
                     )}
                   </div>
 
                   {/* Shared Requests Drawer (Quick lookup) */}
                   {Object.values(pendingRequests).flat().length > 0 && (
                     <div style={{ marginTop: "3rem" }}>
-                        <Card style={{ padding: "1.5rem", borderLeft: "4px solid var(--color-error)" }}>
-                            <h3 className="text-h3" style={{ fontSize: "1.1rem", marginBottom: "1.5rem" }}>Enrollment Alerts</h3>
-                            <div className="grid-cols-2 gap-2">
-                                {classes.map((cls) => (
-                                    pendingRequests[cls.id]?.map((req: any) => (
-                                        <div key={`${cls.id}-${req.id}`} className="flex-between glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem" }}>
-                                            <div>
-                                                <h4 style={{ fontWeight: 700, fontSize: "0.85rem" }}>{req.first_name} {req.last_name}</h4>
-                                                <p className="text-small" style={{ fontSize: "0.7rem", opacity: 0.6 }}>Class: {cls.class_name}</p>
+                        <div style={{ padding: "1.5rem", borderLeft: "4px solid var(--color-error)" }}>
+                            <Card>
+                                <h3 className="text-h3" style={{ fontSize: "1.1rem", marginBottom: "1.5rem" }}>Enrollment Alerts</h3>
+                                <div className="grid-cols-2 gap-2">
+                                    {classes.map((cls) => (
+                                        pendingRequests[cls.id]?.map((req: any) => (
+                                            <div key={`${cls.id}-${req.id}`} className="flex-between glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem" }}>
+                                                <div>
+                                                    <h4 style={{ fontWeight: 700, fontSize: "0.85rem" }}>{req.first_name} {req.last_name}</h4>
+                                                    <p className="text-small" style={{ fontSize: "0.7rem", opacity: 0.6 }}>Class: {cls.class_name}</p>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button className="btn btn-primary btn-sm" onClick={() => handleApprove(cls.id, req.id)}>Approve</button>
+                                                    <button className="btn btn-ghost btn-sm" style={{ color: "var(--color-error)" }} onClick={() => handleDecline(cls.id, req.id)}>Decline</button>
+                                                </div>
                                             </div>
-                                            <div className="flex gap-1">
-                                                <button className="btn btn-primary btn-sm" onClick={() => handleApprove(cls.id, req.id)}>Approve</button>
-                                                <button className="btn btn-ghost btn-sm" style={{ color: "var(--color-error)" }} onClick={() => handleDecline(cls.id, req.id)}>Decline</button>
-                                            </div>
-                                        </div>
-                                    ))
-                                ))}
-                            </div>
-                        </Card>
+                                        ))
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
                     </div>
                   )}
 
@@ -310,46 +318,51 @@ export default function InstructorDashboard() {
                     </div>
                     
                     <div className="grid lg:grid-cols-2 gap-4">
-                      <Card className="obsidian-card" style={{ padding: "1.5rem" }}>
-                        <div className="flex items-center gap-3 mb-6">
-                          <CheckCircle size={20} color="#10b981" />
-                          <h4 style={{ fontWeight: 700 }}>Student Whitelist</h4>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <input id="whitelist-email" placeholder="student@example.com" className="terminal-input w-full p-4 rounded-xl" style={{ outline: "none" }} />
-                          <button className="btn-premium-indigo" onClick={async () => {
-                              const e = document.getElementById('whitelist-email') as HTMLInputElement;
-                              if (!e.value) return;
-                              try { await api.post("/instructor/whitelist-student", { email: e.value }); toast.success("Whitelisted!"); e.value = ""; fetchData(); } 
-                              catch (err) { toast.error("Failed."); }
-                          }}>Add to Cohort</button>
-                        </div>
-                      </Card>
+                      <div style={{ padding: "1.5rem" }}>
+                        <Card className="obsidian-card">
+                          <div className="flex items-center gap-3 mb-6">
+                            <CheckCircle size={20} color="#10b981" />
+                            <h4 style={{ fontWeight: 700 }}>Student Whitelist</h4>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <input id="whitelist-email" placeholder="student@example.com" className="terminal-input w-full p-4 rounded-xl" style={{ outline: "none" }} />
+                            <button className="btn-premium-indigo" onClick={async () => {
+                                const e = document.getElementById('whitelist-email') as HTMLInputElement;
+                                if (!e.value) return;
+                                try { await api.post("/instructor/whitelist-student", { email: e.value }); toast.success("Whitelisted!"); e.value = ""; fetchData(); } 
+                                catch (err) { toast.error("Failed."); }
+                            }}>Add to Cohort</button>
+                          </div>
+                        </Card>
+                      </div>
 
-                      <Card className="obsidian-card" style={{ padding: "1.5rem" }}>
-                        <div className="flex items-center gap-3 mb-6">
-                          <UserPlus size={20} color="#6366f1" />
-                          <h4 style={{ fontWeight: 700 }}>Staff Collaboration</h4>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <input id="assistant-email" placeholder="assistant@devoria.com" className="terminal-input w-full p-4 rounded-xl" style={{ outline: "none" }} />
-                          <button className="btn-premium-indigo" onClick={async () => {
-                              const e = document.getElementById('assistant-email') as HTMLInputElement;
-                              if (!e.value) return;
-                              try { await api.post("/instructor/invite-assistant", { email: e.value }); toast.success("Invited!"); e.value = ""; fetchData(); } 
-                              catch (err) { toast.error("Failed."); }
-                          }}>Invite Assistant</button>
-                        </div>
-                      </Card>
+                      <div style={{ padding: "1.5rem" }}>
+                        <Card className="obsidian-card">
+                          <div className="flex items-center gap-3 mb-6">
+                            <UserPlus size={20} color="#6366f1" />
+                            <h4 style={{ fontWeight: 700 }}>Staff Collaboration</h4>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <input id="assistant-email" placeholder="assistant@devoria.com" className="terminal-input w-full p-4 rounded-xl" style={{ outline: "none" }} />
+                            <button className="btn-premium-indigo" onClick={async () => {
+                                const e = document.getElementById('assistant-email') as HTMLInputElement;
+                                if (!e.value) return;
+                                try { await api.post("/instructor/invite-assistant", { email: e.value }); toast.success("Invited!"); e.value = ""; fetchData(); } 
+                                catch (err) { toast.error("Failed."); }
+                            }}>Invite Assistant</button>
+                          </div>
+                        </Card>
+                      </div>
                     </div>
 
                     <div style={{ marginTop: "1rem" }}>
-                      <Card className="obsidian-card" style={{ padding: 0, overflow: "hidden" }}>
-                          <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)" }}>
-                              <h4 className="text-white" style={{ fontWeight: 700, fontSize: "0.9rem" }}>Active Whitelist Registry</h4>
-                          </div>
-                          <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-                              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                      <div style={{ padding: 0, overflow: "hidden" }}>
+                        <Card className="obsidian-card">
+                            <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)" }}>
+                                <h4 className="text-white" style={{ fontWeight: 700, fontSize: "0.9rem" }}>Active Whitelist Registry</h4>
+                            </div>
+                            <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
                                   <thead style={{ background: "rgba(0,0,0,0.02)", textAlign: "left" }}>
                                       <tr>
                                           <th style={{ padding: "0.75rem 1.5rem" }}>Email</th>
@@ -377,7 +390,8 @@ export default function InstructorDashboard() {
                                   </tbody>
                               </table>
                           </div>
-                      </Card>
+                        </Card>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -390,16 +404,18 @@ export default function InstructorDashboard() {
       {/* Create Class Modal */}
       {showClassModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "1rem" }}>
-          <Card style={{ maxWidth: "400px", width: "100%", padding: "2rem" }} className="animate-fade-in">
-            <div className="flex-between" style={{ marginBottom: "1.5rem" }}>
-              <h3 className="text-h3">Create Class</h3>
-              <button onClick={() => setShowClassModal(false)} style={{ background: "none", border: "none" }}><X size={20} /></button>
-            </div>
-            <form onSubmit={handleCreateClass} className="flex-column gap-2">
-              <input required placeholder="Class Name" value={classForm.class_name} onChange={e => setClassForm({...classForm, class_name: e.target.value})} style={{ padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid var(--color-border)" }} />
-              <button type="submit" className="btn btn-primary">Create Class</button>
-            </form>
-          </Card>
+          <div style={{ maxWidth: "400px", width: "100%", padding: "2rem" }}>
+            <Card className="animate-fade-in">
+              <div className="flex-between" style={{ marginBottom: "1.5rem" }}>
+                <h3 className="text-h3">Create Class</h3>
+                <button onClick={() => setShowClassModal(false)} style={{ background: "none", border: "none" }}><X size={20} /></button>
+              </div>
+              <form onSubmit={handleCreateClass} className="flex-column gap-2">
+                <input required placeholder="Class Name" value={classForm.class_name} onChange={e => setClassForm({...classForm, class_name: e.target.value})} style={{ padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid var(--color-border)" }} />
+                <button type="submit" className="btn btn-primary">Create Class</button>
+              </form>
+            </Card>
+          </div>
         </div>
       )}
 

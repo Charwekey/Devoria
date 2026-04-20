@@ -13,7 +13,8 @@ from routes import (
     attendance_routes,
     class_students_routes,
     admin_routes,
-    instructor_routes
+    instructor_routes,
+    materials_routes
 )
 
 app = FastAPI()
@@ -118,6 +119,28 @@ def ensure_schema_sync():
     except Exception as e:
         print(f"Schema sync warning (submissions): {e}")
 
+    # Materials Table Sync
+    try:
+        with engine.connect() as connection:
+            print("Syncing 'materials' table...")
+            # Add missing columns if needed
+            try:
+                connection.execute(text("ALTER TABLE materials ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"))
+            except Exception as e:
+                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                    pass  # Column likely already exists
+            
+            try:
+                connection.execute(text("ALTER TABLE materials ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+            except Exception as e:
+                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                    pass  # Column likely already exists
+            
+            connection.commit()
+            print("Successfully synced 'materials' table.")
+    except Exception as e:
+        print(f"Schema sync warning (materials): {e}")
+
 # include routers
 app.include_router(user_routes.router)
 app.include_router(classes_routes.router)
@@ -128,6 +151,7 @@ app.include_router(attendance_routes.router)
 app.include_router(class_students_routes.router)
 app.include_router(admin_routes.router)
 app.include_router(instructor_routes.router)
+app.include_router(materials_routes.router)
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "..", "static")

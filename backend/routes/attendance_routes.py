@@ -11,6 +11,7 @@ class AttendanceCreate(BaseModel):
     student_id: str
     status: str
     slot: int | None = None
+    date: str | None = None
 
 #  MARK ATTENDANCE
 @router.post("/")
@@ -20,12 +21,18 @@ def mark_attendance(
     db: Session = Depends(get_db)
 ):
     attendance_service = AttendanceService(db)
+    date_obj = None
+    if data.date:
+        from datetime import datetime
+        date_obj = datetime.fromisoformat(data.date.replace('Z', '+00:00'))
+    
     return attendance_service.mark_attendance(
         user, 
         data.class_id, 
         data.student_id, 
         data.status,
-        slot=data.slot
+        slot=data.slot,
+        date=date_obj
     )
 
 

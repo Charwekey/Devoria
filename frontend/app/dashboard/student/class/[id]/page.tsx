@@ -39,6 +39,7 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
   const [assignments, setAssignments] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -58,11 +59,12 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
 
   const fetchClassData = async () => {
     try {
-      const [classRes, assignmentsRes, submissionsRes, attendanceRes] = await Promise.all([
+      const [classRes, assignmentsRes, submissionsRes, attendanceRes, materialsRes] = await Promise.all([
         api.get(`/classes/${classId}`).catch(e => ({ data: null })),
         api.get(`/assignments/class/${classId}`).catch(e => ({ data: [] })),
         api.get(`/submissions/me`).catch(e => ({ data: [] })),
-        api.get(`/attendance/me`).catch(e => ({ data: [] }))
+        api.get(`/attendance/me`).catch(e => ({ data: [] })),
+        api.get(`/materials/class/${classId}`).catch(e => ({ data: [] }))
       ]);
       setClassData(classRes.data);
       setAssignments(assignmentsRes.data || []);
@@ -71,6 +73,7 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
       setSubmissions(classSubmissions);
       
       setAttendance(attendanceRes.data?.filter((a: any) => a.class_id === classId) || []);
+      setMaterials(materialsRes.data || []);
     } catch (err) {
       console.error("Fetch class data failed:", err);
     } finally {
@@ -142,6 +145,7 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
 
   const tabs = [
     { id: "assignments", label: "Curriculum", icon: FileText },
+    { id: "materials", label: "Course Materials", icon: Download },
     { id: "submissions", label: "Submissions", icon: CheckCircle },
     { id: "attendance", label: "Attendance", icon: Clock },
     { id: "showcase", label: "Portfolio", icon: Layout },
@@ -169,19 +173,25 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                    </div>
                 </div>
                 <div style={{ display: "flex", gap: "1rem" }}>
-                   <Card style={{ padding: "1.25rem 2rem", textAlign: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
-                      <label className="text-small" style={{ fontWeight: 800, opacity: 0.4, display: "block" }}>ATTENDANCE</label>
-                      <h4 style={{ fontSize: "1.75rem", margin: 0, fontWeight: 900 }}>{attendance.length} {attendance.length === 1 ? "Class" : "Classes"}</h4>
-                      <p className="text-small" style={{ fontSize: "0.6rem", fontWeight: 700, color: "var(--color-accent-green)" }}>ATTENDED</p>
-                   </Card>
-                   <Card style={{ padding: "1.25rem 2rem", textAlign: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
-                      <label className="text-small" style={{ fontWeight: 800, opacity: 0.4, display: "block" }}>TOTAL TASKS</label>
-                      <h4 style={{ fontSize: "1.75rem", margin: 0, fontWeight: 900 }}>{assignments.length}</h4>
-                   </Card>
-                   <Card style={{ padding: "1.25rem 2rem", textAlign: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
-                      <label className="text-small" style={{ fontWeight: 800, opacity: 0.4, display: "block" }}>AVG GRADE</label>
-                      <h4 style={{ fontSize: "1.75rem", margin: 0, fontWeight: 900, color: "var(--color-primary)" }}>{averageScore.toFixed(0)}%</h4>
-                   </Card>
+                   <div style={{ padding: "1.25rem 2rem", textAlign: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
+                      <Card>
+                         <label className="text-small" style={{ fontWeight: 800, opacity: 0.4, display: "block" }}>ATTENDANCE</label>
+                         <h4 style={{ fontSize: "1.75rem", margin: 0, fontWeight: 900 }}>{attendance.length} {attendance.length === 1 ? "Class" : "Classes"}</h4>
+                         <p className="text-small" style={{ fontSize: "0.6rem", fontWeight: 700, color: "var(--color-accent-green)" }}>ATTENDED</p>
+                      </Card>
+                   </div>
+                   <div style={{ padding: "1.25rem 2rem", textAlign: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
+                      <Card>
+                         <label className="text-small" style={{ fontWeight: 800, opacity: 0.4, display: "block" }}>TOTAL TASKS</label>
+                         <h4 style={{ fontSize: "1.75rem", margin: 0, fontWeight: 900 }}>{assignments.length}</h4>
+                      </Card>
+                   </div>
+                   <div style={{ padding: "1.25rem 2rem", textAlign: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
+                      <Card>
+                         <label className="text-small" style={{ fontWeight: 800, opacity: 0.4, display: "block" }}>AVG GRADE</label>
+                         <h4 style={{ fontSize: "1.75rem", margin: 0, fontWeight: 900, color: "var(--color-primary)" }}>{averageScore.toFixed(0)}%</h4>
+                      </Card>
+                   </div>
                 </div>
              </div>
           </div>
@@ -223,7 +233,8 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                       const isFinal = assn.is_final_project == 1;
 
                       return (
-                        <Card key={assn.id} style={{ padding: 0, borderLeft: isFinal ? "4px solid var(--color-accent-purple)" : "1px solid var(--color-border)" }}>
+                        <div key={assn.id} style={{ padding: 0, borderLeft: isFinal ? "4px solid var(--color-accent-purple)" : "1px solid var(--color-border)" }}>
+                          <Card>
                           <div 
                             className="flex-between" 
                             style={{ padding: "1.5rem", cursor: "pointer" }}
@@ -291,6 +302,7 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                             </div>
                           )}
                         </Card>
+                        </div>
                       );
                     }) : (
                       <div style={{ textAlign: "center", padding: "4rem", opacity: 0.5 }}>
@@ -307,19 +319,20 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                   <h3 className="text-h2" style={{ fontSize: "1.75rem", marginBottom: "2rem" }}>Academic Record</h3>
                   <div className="flex-column gap-2">
                     {submissions.length > 0 ? submissions.map((sub: any) => (
-                      <Card key={sub.id} style={{ padding: "1.5rem" }}>
-                        <div className="flex-between">
-                           <div style={{ display: "flex", gap: "1.5rem" }}>
-                              <div style={{ background: "rgba(34, 197, 94, 0.1)", color: "var(--color-accent-green)", width: "40px", height: "40px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                 <CheckCircle size={20} />
-                              </div>
-                              <div>
-                                 <h4 style={{ fontWeight: 700 }}>{sub.assignment?.title}</h4>
-                                 <p className="text-small" style={{ opacity: 0.5 }}>Handed in {new Date(sub.submitted_at).toLocaleDateString()}</p>
-                              </div>
-                           </div>
-                           <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-                              <div style={{ textAlign: "right" }}>
+                      <div key={sub.id} style={{ padding: "1.5rem" }}>
+                        <Card>
+                          <div className="flex-between">
+                             <div style={{ display: "flex", gap: "1.5rem" }}>
+                                <div style={{ background: "rgba(34, 197, 94, 0.1)", color: "var(--color-accent-green)", width: "40px", height: "40px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                   <CheckCircle size={20} />
+                                </div>
+                                <div>
+                                   <h4 style={{ fontWeight: 700 }}>{sub.assignment?.title}</h4>
+                                   <p className="text-small" style={{ opacity: 0.5 }}>Handed in {new Date(sub.submitted_at).toLocaleDateString()}</p>
+                                </div>
+                             </div>
+                             <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
+                                <div style={{ textAlign: "right" }}>
                                  <label className="text-small" style={{ fontWeight: 800, opacity: 0.4, display: "block" }}>SCORE</label>
                                  <span style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--color-primary)" }}>{sub.score || "—"}</span>
                               </div>
@@ -327,6 +340,7 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                            </div>
                         </div>
                       </Card>
+                      </div>
                     )) : (
                       <div style={{ textAlign: "center", padding: "5rem", opacity: 0.2 }}>
                          <BarChart3 size={64} style={{ margin: "0 auto 1rem" }} />
@@ -337,11 +351,57 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                 </>
               )}
 
+              {activeTab === "materials" && (
+                <>
+                  <h3 className="text-h2" style={{ fontSize: "1.5rem", marginBottom: "2rem" }}>Course Materials</h3>
+                  <p className="text-small" style={{ marginBottom: "1.5rem", opacity: 0.7 }}>Learning resources uploaded by your instructor.</p>
+                  {materials.length > 0 ? (
+                    <div className="flex-column gap-3">
+                      {materials.map((material: any) => (
+                        <div key={material.id}>
+                          <Card>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                              <div style={{ flex: 1 }}>
+                                <h4 style={{ fontWeight: 700, marginBottom: "0.5rem" }}>{material.title}</h4>
+                                <p className="text-small" style={{ opacity: 0.6, marginBottom: "0.75rem" }}>{material.description}</p>
+                                <div style={{ display: "flex", gap: "0.5rem" }}>
+                                  <span className="badge badge-blue" style={{ fontSize: "0.65rem" }}>{material.material_type?.toUpperCase()}</span>
+                                  <span className="text-small" style={{ opacity: 0.5 }}>
+                                    Uploaded: {new Date(material.created_at || Date.now()).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+                              {material.file_url && (
+                                <Link 
+                                  href={`http://localhost:8000${material.file_url}`} 
+                                  target="_blank" 
+                                  download
+                                  className="btn btn-primary btn-sm" 
+                                  style={{ marginLeft: "1rem", whiteSpace: "nowrap" }}
+                                >
+                                  <Download size={14} /> Download
+                                </Link>
+                              )}
+                            </div>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: "4rem", textAlign: "center", opacity: 0.5 }}>
+                      <FileText size={48} style={{ margin: "0 auto 1rem" }} />
+                      <p>No course materials available yet.</p>
+                    </div>
+                  )}
+                </>
+              )}
+
               {activeTab === "attendance" && (
                 <>
                   <h3 className="text-h2" style={{ fontSize: "1.5rem", marginBottom: "1.5rem" }}>Record of Presence</h3>
-                  <Card style={{ padding: "0" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <div style={{ padding: "0" }}>
+                    <Card>
+                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr style={{ background: "rgba(0,0,0,0.02)" }}>
                           <th style={{ padding: "1rem", textAlign: "left" }} className="text-small">Date</th>
@@ -372,7 +432,8 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                         )}
                       </tbody>
                     </table>
-                  </Card>
+                    </Card>
+                  </div>
                 </>
               )}
 
@@ -382,8 +443,9 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                   <div className="grid-cols-2 gap-2">
                     {submissions.filter(s => s.assignment?.is_final_project == 1).length > 0 ? 
                       submissions.filter(s => s.assignment?.is_final_project == 1).map(sub => (
-                      <Card key={sub.id} style={{ padding: "1.5rem", border: "1px solid var(--color-border)" }}>
-                         <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", marginBottom: "1.25rem" }}>
+                      <div key={sub.id} style={{ padding: "1.5rem", border: "1px solid var(--color-border)" }}>
+                        <Card>
+                           <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", marginBottom: "1.25rem" }}>
                             <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "var(--color-primary-light)", color: "var(--color-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
                                {sub.student?.first_name?.[0]}
                             </div>
@@ -397,12 +459,15 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                             <Link href={sub.github_link || "#"} target="_blank" className="btn btn-ghost btn-sm"><LinkIcon size={14} /></Link>
                             <Link href={sub.demo_link || "#"} target="_blank" className="btn btn-primary btn-sm"><ExternalLink size={14} /> View Demo</Link>
                          </div>
-                      </Card>
+                        </Card>
+                      </div>
                     )) : (
-                      <Card style={{ gridColumn: "span 2", padding: "4rem", textAlign: "center", opacity: 0.5 }}>
-                        <Award size={48} style={{ margin: "0 auto 1rem" }} />
-                        <p>No final projects submitted yet.</p>
-                      </Card>
+                      <div style={{ gridColumn: "span 2", padding: "4rem", textAlign: "center", opacity: 0.5 }}>
+                        <Card>
+                          <Award size={48} style={{ margin: "0 auto 1rem" }} />
+                          <p>No final projects submitted yet.</p>
+                        </Card>
+                      </div>
                     )}
                   </div>
                 </>

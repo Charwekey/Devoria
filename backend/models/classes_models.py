@@ -21,3 +21,4 @@ class Class(Base):
     class_student = relationship("ClassStudent", back_populates="classes")
     attendance = relationship("Attendance", back_populates="classes")
     assignments = relationship("Assignment", back_populates="classes")
+    materials = relationship("Material", back_populates="classes")
