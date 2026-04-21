@@ -18,6 +18,7 @@ import {
   Shield,
   Eye,
   EyeOff,
+  Trash2,
 } from "lucide-react";
 import api from "@/services/api";
 import toast from "react-hot-toast";
@@ -382,6 +383,10 @@ export default function InstructorDashboard() {
   const [loading, setLoading] = useState(true);
   const [showClassModal, setShowClassModal] = useState(false);
   const [classForm, setClassForm] = useState({ class_name: "", track: user?.track || "frontend" });
+  const [showEditClassModal, setShowEditClassModal] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<any>(null);
+  const [classEditForm, setClassEditForm] = useState({ class_name: "", track: "" });
+  const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
 
   const [settingsForm, setSettingsForm] = useState({
     first_name: user?.first_name || "",
@@ -441,6 +446,37 @@ export default function InstructorDashboard() {
       fetchData();
     } catch (err) {
       toast.error("Failed to create class.");
+    }
+  };
+
+  const handleEditClass = (cls: any) => {
+    setSelectedClass(cls);
+    setClassEditForm({ class_name: cls.class_name, track: cls.track });
+    setShowEditClassModal(true);
+  };
+
+  const handleUpdateClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClass) return;
+    try {
+      await api.put(`/classes/${selectedClass.id}`, classEditForm);
+      toast.success("Class updated successfully!");
+      setShowEditClassModal(false);
+      setSelectedClass(null);
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to update class.");
+    }
+  };
+
+  const handleDeleteClass = async (classId: string) => {
+    if (!confirm("Are you sure you want to delete this cohort? This action cannot be undone.")) return;
+    try {
+      await api.delete(`/classes/${classId}`);
+      toast.success("Class deleted successfully!");
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to delete class.");
     }
   };
 
@@ -659,15 +695,79 @@ export default function InstructorDashboard() {
                 <div className="id-cohort-grid">
                   {classes.length > 0 ? (
                     classes.map((cls: any) => (
-                      <div key={cls.id} className="id-cohort-card">
+                      <div 
+                        key={cls.id} 
+                        className="id-cohort-card"
+                      >
                         <div className="id-flex-between" style={{ marginBottom: "0.85rem" }}>
                           <span className="id-track-badge">{cls.track?.toUpperCase()}</span>
-                          {pendingRequests[cls.id]?.length > 0 && (
-                            <span className="id-pending-dot">
-                              <span className="id-status-dot" />
-                              {pendingRequests[cls.id].length} Pending
-                            </span>
-                          )}
+                          <div style={{ display: "flex", gap: "0.8rem", alignItems: "center", position: "relative" }}>
+                            {/* Edit/Modify Icon */}
+                            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                              <button
+                                className="id-copy-btn"
+                                onClick={() => handleEditClass(cls)}
+                                onMouseEnter={() => setHoveredIcon(`${cls.id}-edit`)}
+                                onMouseLeave={() => setHoveredIcon(null)}
+                                title="Edit class"
+                                style={{ opacity: hoveredIcon === `${cls.id}-edit` ? 1 : 0.6, transition: "opacity 0.2s", padding: "0.4rem" }}
+                              >
+                                <Settings size={18} />
+                              </button>
+                              {hoveredIcon === `${cls.id}-edit` && (
+                                <span style={{ 
+                                  position: "absolute", 
+                                  bottom: "-28px", 
+                                  left: "50%", 
+                                  transform: "translateX(-50%)",
+                                  fontSize: "0.75rem", 
+                                  fontWeight: 700, 
+                                  color: "#2563eb",
+                                  backgroundColor: "#fff",
+                                  padding: "0.3rem 0.6rem",
+                                  borderRadius: "4px",
+                                  border: "1px solid #2563eb",
+                                  whiteSpace: "nowrap",
+                                  zIndex: 10
+                                }}>
+                                  Modify
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Delete Icon */}
+                            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                              <button
+                                className="id-copy-btn"
+                                onClick={() => handleDeleteClass(cls.id)}
+                                onMouseEnter={() => setHoveredIcon(`${cls.id}-delete`)}
+                                onMouseLeave={() => setHoveredIcon(null)}
+                                title="Delete class"
+                                style={{ opacity: hoveredIcon === `${cls.id}-delete` ? 1 : 0.4, color: "#ef4444", transition: "opacity 0.2s", padding: "0.4rem" }}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                              {hoveredIcon === `${cls.id}-delete` && (
+                                <span style={{ 
+                                  position: "absolute", 
+                                  bottom: "-28px", 
+                                  left: "50%", 
+                                  transform: "translateX(-50%)",
+                                  fontSize: "0.75rem", 
+                                  fontWeight: 700, 
+                                  color: "#ef4444",
+                                  backgroundColor: "#fff",
+                                  padding: "0.3rem 0.6rem",
+                                  borderRadius: "4px",
+                                  border: "1px solid #ef4444",
+                                  whiteSpace: "nowrap",
+                                  zIndex: 10
+                                }}>
+                                  Delete
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
                         <h4 className="id-cohort-name">{cls.class_name}</h4>
@@ -682,6 +782,13 @@ export default function InstructorDashboard() {
                             <Copy size={13} />
                           </button>
                         </div>
+
+                        {pendingRequests[cls.id]?.length > 0 && (
+                          <span className="id-pending-dot" style={{ marginTop: "0.75rem" }}>
+                            <span className="id-status-dot" />
+                            {pendingRequests[cls.id].length} Pending
+                          </span>
+                        )}
 
                         <button
                           className="id-manage-btn"
@@ -920,6 +1027,53 @@ export default function InstructorDashboard() {
               </div>
               <button type="submit" className="id-btn-save" style={{ marginTop: "0.5rem" }}>
                 Create Class
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Class Modal ── */}
+      {showEditClassModal && selectedClass && (
+        <div className="id-modal-backdrop" onClick={() => setShowEditClassModal(false)}>
+          <div className="id-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="id-flex-between" style={{ marginBottom: "1.5rem" }}>
+              <h3 className="id-modal-title">Edit Cohort</h3>
+              <button className="id-modal-close" onClick={() => setShowEditClassModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <form
+              onSubmit={handleUpdateClass}
+              style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+            >
+              <div>
+                <label className="id-field-label">Class Name</label>
+                <input
+                  required
+                  placeholder="e.g. Frontend Cohort 2025"
+                  value={classEditForm.class_name}
+                  onChange={(e) => setClassEditForm({ ...classEditForm, class_name: e.target.value })}
+                  className="id-modal-input"
+                />
+              </div>
+              <div>
+                <label className="id-field-label">Track</label>
+                <select
+                  required
+                  value={classEditForm.track}
+                  onChange={(e) => setClassEditForm({ ...classEditForm, track: e.target.value })}
+                  className="id-modal-input"
+                  style={{ cursor: "pointer" }}
+                >
+                  <option value="frontend">Frontend</option>
+                  <option value="backend">Backend</option>
+                  <option value="fullstack">Fullstack</option>
+                  <option value="mobile">Mobile</option>
+                </select>
+              </div>
+              <button type="submit" className="id-btn-save" style={{ marginTop: "0.5rem" }}>
+                Update Class
               </button>
             </form>
           </div>
