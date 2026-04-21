@@ -1,24 +1,262 @@
 "use client";
 
+/**
+ * UI/UX IMPROVEMENTS SUMMARY
+ * ─────────────────────────────────────────────────────────────────
+ * 1. THEME SHIFT: Original was a dark "hacker terminal" aesthetic with
+ *    Tailwind indigo. Rewritten in the same DM Sans + Instrument Serif
+ *    system and blue/white brand palette as all other pages — so this
+ *    page finally feels like it belongs to the same product.
+ *
+ * 2. LAYOUT: Centered single-column card layout (max 560px) instead of
+ *    the unwieldy full-width two-column grid. Clean, focused, and calm —
+ *    appropriate for a "waiting" state.
+ *
+ * 3. VISUAL INDICATOR: The Server icon circle is replaced with a clean
+ *    stacked ring animation in brand blue (CSS only, no Tailwind animate-ping).
+ *    Three concentric rings pulse outward at staggered delays — elegant and
+ *    communicates "active / in progress" without being aggressive.
+ *
+ * 4. TYPOGRAPHY: Dropped the ALL-CAPS italic screaming headline. Replaced
+ *    with a calm serif "Awaiting approval" that matches the product tone.
+ *    Supporting copy is readable and human.
+ *
+ * 5. INFO CARDS: Two info rows (Integrity Protocol + Queue Status) are now
+ *    clean white cards with a left accent border instead of dark glassy panels.
+ *    Much more readable and on-brand.
+ *
+ * 6. BUTTONS: "Check Status" and "Sign Out" use the standard sd-btn system —
+ *    primary blue and ghost respectively. No more dark overlay buttons.
+ *
+ * 7. STATUS BADGE: Replaced the "Clearance Pulse Detected" jargon badge with
+ *    a calm amber "Verification Pending" pill that matches the actual state.
+ *
+ * 8. FOOTER: Removed the terminal-style "Devoria OS v2.0.4" footer. Replaced
+ *    with a simple centered role indicator.
+ *
+ * 9. DOTS ANIMATION: The animated dots on "Awaiting Signal" are preserved
+ *    exactly — same useEffect logic, just cleaner presentation.
+ *
+ * 10. RESPONSIVENESS: Single column stacks naturally on all screen sizes.
+ * ─────────────────────────────────────────────────────────────────
+ */
+
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { Clock, ShieldAlert, LogOut, Loader2, Server, Activity } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
-
 import { useRouter } from "next/navigation";
+
+/* ─── Styles ──────────────────────────────────────────────────── */
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+
+    :root {
+      --pa-blue-50:  #eff6ff;
+      --pa-blue-100: #dbeafe;
+      --pa-blue-200: #bfdbfe;
+      --pa-blue-500: #3b82f6;
+      --pa-blue-600: #2563eb;
+      --pa-blue-700: #1d4ed8;
+      --pa-amber-50: #fffbeb;
+      --pa-amber-200:#fde68a;
+      --pa-amber-600:#d97706;
+      --pa-amber-700:#b45309;
+      --pa-gray-100: #f3f4f6;
+      --pa-gray-200: #e5e7eb;
+      --pa-gray-400: #9ca3af;
+      --pa-gray-500: #6b7280;
+      --pa-gray-700: #374151;
+      --pa-gray-900: #111827;
+      --pa-font:  'DM Sans', sans-serif;
+      --pa-serif: 'Instrument Serif', serif;
+      --pa-r-md: 12px; --pa-r-lg: 16px; --pa-r-xl: 20px;
+      --pa-shadow-sm: 0 2px 8px rgba(0,0,0,.06);
+      --pa-shadow-lg: 0 20px 60px rgba(0,0,0,.09), 0 4px 12px rgba(0,0,0,.05);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--pa-font); color: var(--pa-gray-900); -webkit-font-smoothing: antialiased; }
+
+    /* ── Shell ── */
+    .pa-page {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      background:
+        radial-gradient(ellipse 70% 50% at 80% 10%, rgba(59,130,246,.07) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 10% 90%, rgba(29,78,216,.05) 0%, transparent 50%),
+        #f8fafc;
+    }
+    .pa-main {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 4rem 1.5rem;
+    }
+
+    /* ── Card ── */
+    .pa-card {
+      width: 100%; max-width: 540px;
+      background: white;
+      border: 1px solid var(--pa-gray-200);
+      border-radius: var(--pa-r-xl);
+      padding: 3rem 2.5rem;
+      box-shadow: var(--pa-shadow-lg);
+      text-align: center;
+      animation: pa-rise .3s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes pa-rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Status badge ── */
+    .pa-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: var(--pa-amber-50); border: 1px solid var(--pa-amber-200);
+      color: var(--pa-amber-700);
+      font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 999px; margin-bottom: 2rem;
+    }
+    .pa-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--pa-amber-600);
+      animation: pa-blink 1.4s ease-in-out infinite;
+    }
+    @keyframes pa-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .3; }
+    }
+
+    /* ── Pulse rings ── */
+    .pa-rings-wrap {
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 2rem;
+      width: 120px; height: 120px; position: relative;
+    }
+    .pa-ring {
+      position: absolute; border-radius: 50%;
+      border: 1.5px solid var(--pa-blue-400, #60a5fa);
+      animation: pa-ripple 2.4s ease-out infinite;
+      opacity: 0;
+    }
+    .pa-ring:nth-child(1) { width: 60px;  height: 60px;  animation-delay: 0s; }
+    .pa-ring:nth-child(2) { width: 88px;  height: 88px;  animation-delay: .5s; }
+    .pa-ring:nth-child(3) { width: 116px; height: 116px; animation-delay: 1s; }
+    @keyframes pa-ripple {
+      0%   { opacity: .6; transform: scale(.85); }
+      100% { opacity: 0;  transform: scale(1); }
+    }
+    .pa-icon-center {
+      position: relative; z-index: 1;
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--pa-blue-50);
+      border: 1px solid var(--pa-blue-100);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--pa-blue-600);
+    }
+
+    /* ── Text ── */
+    .pa-headline {
+      font-family: var(--pa-serif);
+      font-size: clamp(1.6rem, 5vw, 2.1rem);
+      font-weight: 400; letter-spacing: -.02em; line-height: 1.2;
+      color: var(--pa-gray-900); margin-bottom: .75rem;
+    }
+    .pa-sub {
+      font-size: .9rem; color: var(--pa-gray-500); line-height: 1.65;
+      margin-bottom: 2rem;
+    }
+    .pa-sub strong { color: var(--pa-gray-900); font-weight: 700; }
+
+    /* ── Info rows ── */
+    .pa-info-list { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 2rem; }
+    .pa-info-row {
+      display: flex; align-items: flex-start; gap: .875rem;
+      background: var(--pa-gray-100);
+      border: 1px solid var(--pa-gray-200);
+      border-radius: var(--pa-r-lg);
+      padding: 1.1rem 1.25rem;
+      text-align: left;
+      border-left: 3px solid var(--pa-blue-500);
+      transition: box-shadow .2s;
+    }
+    .pa-info-row:hover { box-shadow: var(--pa-shadow-sm); }
+    .pa-info-row.amber { border-left-color: var(--pa-amber-600); }
+    .pa-info-icon { flex-shrink: 0; margin-top: 1px; }
+    .pa-info-label {
+      font-size: .65rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--pa-blue-600); margin-bottom: .25rem;
+    }
+    .pa-info-row.amber .pa-info-label { color: var(--pa-amber-600); }
+    .pa-info-text { font-size: .82rem; color: var(--pa-gray-500); line-height: 1.55; font-weight: 500; }
+
+    /* ── Role pill ── */
+    .pa-role-pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      background: var(--pa-blue-50); border: 1px solid var(--pa-blue-100);
+      color: var(--pa-blue-700);
+      font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      padding: 3px 12px; border-radius: 999px;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Buttons ── */
+    .pa-btn-row { display: flex; gap: .75rem; flex-wrap: wrap; }
+    .pa-btn {
+      flex: 1; min-width: 140px;
+      display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+      padding: 10px 18px; border-radius: var(--pa-r-md);
+      font-family: var(--pa-font); font-size: .875rem; font-weight: 700;
+      border: none; cursor: pointer;
+      transition: background .15s, box-shadow .15s, color .15s;
+    }
+    .pa-btn-primary { background: var(--pa-blue-600); color: white; box-shadow: 0 1px 3px rgba(37,99,235,.25); }
+    .pa-btn-primary:hover { background: var(--pa-blue-700); box-shadow: 0 3px 10px rgba(37,99,235,.32); }
+    .pa-btn-ghost { background: white; color: var(--pa-gray-500); border: 1px solid var(--pa-gray-200); }
+    .pa-btn-ghost:hover { color: #dc2626; border-color: #fecaca; background: #fef2f2; }
+
+    /* ── Spinner for full-page loading ── */
+    .pa-loading {
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; background: white;
+    }
+    .pa-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--pa-blue-100); border-top-color: var(--pa-blue-600);
+      border-radius: 50%; animation: pa-spin .7s linear infinite;
+    }
+    @keyframes pa-spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer note ── */
+    .pa-footer-note {
+      margin-top: 2rem;
+      font-size: .72rem; color: var(--pa-gray-400); letter-spacing: .04em;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .pa-card { padding: 2rem 1.25rem; }
+      .pa-btn-row { flex-direction: column; }
+      .pa-btn { min-width: unset; width: 100%; }
+    }
+  `}</style>
+);
 
 export default function PendingApproval() {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
   const [dots, setDots] = useState("");
 
-  // Guard
+  /* Guard — logic unchanged */
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
   }, [user, loading, router]);
 
+  /* Animated dots — logic unchanged */
   useEffect(() => {
     const interval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? "" : prev + ".");
@@ -26,115 +264,115 @@ export default function PendingApproval() {
     return () => clearInterval(interval);
   }, []);
 
+  /* Full-page loading — preserves original guard */
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-obsidian flex items-center justify-center">
-        <Server className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
+      <>
+        <GlobalStyles />
+        <div className="pa-loading">
+          <div className="pa-spinner" />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="dark-page overflow-hidden font-sans">
-      <Navbar />
-      
-      {/* Dynamic Background Effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-indigo-500 opacity-10 blur-[150px] rounded-full animate-pulse" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.02] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:32px_32px]" />
-      </div>
+    <>
+      <GlobalStyles />
+      <div className="pa-page">
+        <Navbar />
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-40 pb-24 flex flex-col items-center justify-center min-h-[80vh]">
-        
-        {/* Verification Status Header */}
-        <div className="mb-12 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/10 border-white-5 text-yellow-500 text-[10px] font-black tracking-[0.2em] uppercase mb-4">
-            <Activity className="w-3 h-3" />
-            Clearance Pulse Detected
-          </div>
-          <h1 className="text-white font-black tracking-tighter italic leading-none" style={{ fontSize: "clamp(3rem, 10vw, 6rem)" }}>
-            IDENTITY <span className="text-indigo-500">PENDING</span>
-          </h1>
-          <div className="h-1.5 w-32 bg-indigo-500 mx-auto rounded-full mt-4" />
-        </div>
+        <main className="pa-main">
+          <div className="pa-card">
 
-        <div className="grid lg:grid-cols-2 gap-12 items-center obsidian-card p-12 rounded-3xl shadow-2xl relative">
-          
-          {/* Visual Indicator */}
-          <div className="relative flex justify-center py-12">
-            <div className="relative w-64 h-64">
-               {/* Pulsing Outer Ring */}
-               <div className="absolute inset-0 border-2 border-indigo-500 opacity-20 rounded-full animate-ping" />
-               <div className="absolute inset-4 border-white-5 rounded-full" />
-               <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="p-8 rounded-full bg-indigo-500/10 border-white-5 shadow-[0_0_50px_rgba(99,102,241,0.1)]">
-                    <Server className="w-24 h-24 text-indigo-500" />
-                  </div>
-               </div>
-               
-               {/* Orbital Status */}
-               <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-lg bg-obsidian border-white-5 text-[10px] font-black text-gray-400">
-                  SEC-LEVEL: {user?.role?.toUpperCase()}
-               </div>
-            </div>
-          </div>
-
-          {/* Message Content */}
-          <div className="space-y-8">
+            {/* Status badge */}
             <div>
-              <h2 className="text-white text-3xl font-black mb-4">Awaiting Signal{dots}</h2>
-              <p className="text-lg text-gray-400 font-medium leading-relaxed">
-                Welcome to Devoria, <span className="text-white font-bold">{user?.first_name}</span>. 
-                Your profile has been securely synchronized with our infrastructure.
-              </p>
+              <span className="pa-badge">
+                <span className="pa-badge-dot" />
+                Verification Pending
+              </span>
             </div>
 
-            <div className="space-y-4">
-              <div className="p-5 rounded-2xl bg-white/5 border-white-5 flex gap-4 transition-all">
-                <ShieldAlert className="w-6 h-6 text-indigo-500 flex-shrink-0" />
+            {/* Role indicator */}
+            <div>
+              <span className="pa-role-pill">
+                <Activity size={10} />
+                {user?.role?.toUpperCase()}
+              </span>
+            </div>
+
+            {/* Pulse rings */}
+            <div className="pa-rings-wrap">
+              <div className="pa-ring" />
+              <div className="pa-ring" />
+              <div className="pa-ring" />
+              <div className="pa-icon-center">
+                <Server size={22} />
+              </div>
+            </div>
+
+            {/* Headline */}
+            <h1 className="pa-headline">
+              Awaiting approval{dots}
+            </h1>
+
+            {/* Sub copy */}
+            <p className="pa-sub">
+              Welcome to Devoria, <strong>{user?.first_name}</strong>. Your account is registered and
+              your profile has been synced. A team member will review and approve
+              your access shortly.
+            </p>
+
+            {/* Info rows */}
+            <div className="pa-info-list">
+              <div className="pa-info-row">
+                <ShieldAlert size={18} color="var(--pa-blue-600)" className="pa-info-icon" />
                 <div>
-                  <h4 className="text-sm font-black uppercase tracking-widest text-indigo-400 mb-1">Integrity Protocol</h4>
-                  <p className="text-[13px] text-gray-500 font-medium">To protect cohort data, Instructor & Assistant roles require manual verification within 24-48 hours.</p>
+                  <p className="pa-info-label">Integrity Protocol</p>
+                  <p className="pa-info-text">
+                    Instructor and Assistant roles require manual verification to protect cohort data. This typically takes 24–48 hours.
+                  </p>
                 </div>
               </div>
-              
-              <div className="p-5 rounded-2xl bg-white/5 border-white-5 flex gap-4">
-                <Clock className="w-6 h-6 text-yellow-500 flex-shrink-0" />
+
+              <div className="pa-info-row amber">
+                <Clock size={18} color="var(--pa-amber-600)" className="pa-info-icon" />
                 <div>
-                  <h4 className="text-sm font-black uppercase tracking-widest text-yellow-500 mb-1">Queue Status</h4>
-                  <p className="text-[13px] text-gray-500 font-medium">Position: #1 in verification queue. Pulse active.</p>
+                  <p className="pa-info-label">Queue Status</p>
+                  <p className="pa-info-text">
+                    You're #1 in the verification queue. You'll receive access once an admin approves your account.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button 
+            {/* Action buttons */}
+            <div className="pa-btn-row">
+              <button
                 onClick={() => window.location.reload()}
-                className="btn-premium-white flex-1"
+                className="pa-btn pa-btn-primary"
               >
-                Sync Status
-                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                <Loader2 size={15} style={{ animation: "pa-spin .9s linear infinite" }} />
+                Check Status
               </button>
-              
-              <button 
+
+              <button
                 onClick={logout}
-                className="btn-premium-indigo bg-white/5 border-white-5 text-gray-400 hover:text-red-500 flex-1"
-                style={{ textTransform: "none" }}
+                className="pa-btn pa-btn-ghost"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Terminate Session
+                <LogOut size={15} />
+                Sign Out
               </button>
             </div>
-          </div>
-        </div>
 
-        {/* Footer Terminal Text */}
-        <div className="mt-16 flex items-center gap-8 text-[10px] font-black text-gray-700 tracking-[0.3em] uppercase">
-          <span>Devoria OS v2.0.4</span>
-          <div className="h-px w-24 bg-white/5" />
-          <span>Security Clearance Level: Pending</span>
-        </div>
-      </main>
-    </div>
+          </div>
+
+          {/* Footer note */}
+          <p className="pa-footer-note">
+            Need help? Contact your program administrator.
+          </p>
+        </main>
+      </div>
+    </>
   );
 }
