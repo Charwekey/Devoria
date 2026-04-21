@@ -508,6 +508,101 @@ const GlobalStyles = () => (
       line-height: 1.2;
     }
 
+    /* ── New Attendance System ── */
+    .icm-week-container { margin-bottom: 2rem; }
+    .icm-week-header {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 1.25rem;
+      letter-spacing: -.01em;
+    }
+    .icm-days-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      .icm-days-container { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    }
+    @media (max-width: 600px) {
+      .icm-days-container { grid-template-columns: 1fr; gap: 0.75rem; }
+    }
+    .icm-day-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-xs);
+    }
+    .icm-day-card-header {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--blue-600);
+    }
+    .icm-student-attendance-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.875rem 0;
+      border-bottom: 1px solid var(--gray-100);
+      margin-bottom: 0.875rem;
+    }
+    .icm-student-attendance-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .icm-attendance-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      flex: 1;
+      min-width: 120px;
+    }
+    .icm-attendance-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .icm-attendance-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .icm-attendance-btn:hover {
+      border-color: var(--blue-600);
+      background: var(--blue-50);
+    }
+    .icm-attendance-btn.present-active {
+      background: var(--green-500);
+      color: white;
+      border-color: var(--green-500);
+    }
+    .icm-attendance-btn.present-active:hover {
+      background: #16a34a;
+      border-color: #16a34a;
+    }
+    .icm-attendance-btn.absent-active {
+      background: var(--red-500);
+      color: white;
+      border-color: var(--red-500);
+    }
+    .icm-attendance-btn.absent-active:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+
     /* ── Grading ── */
     .icm-submission-row {
       background: var(--gray-50);
@@ -1101,25 +1196,38 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                     <EmptyState icon={<Calendar size={24} />} title="No students enrolled" sub="Enroll students first to start tracking attendance." />
                   ) : (
                     [1,2,3,4,5,6,7,8].map((week) => (
-                      <div key={week} className="icm-card icm-week-card">
-                        <p className="icm-week-title">Week {week}</p>
-                        <div className="icm-days-grid">
+                      <div key={week} className="icm-week-container">
+                        <h3 className="icm-week-header">Week {week}</h3>
+                        <div className="icm-days-container">
                           {["Monday", "Wednesday", "Friday"].map((day, dayIndex) => {
                             const slot = (week - 1) * 3 + dayIndex + 1;
                             return (
-                              <div key={day} className="icm-day-col">
-                                <p className="icm-day-label">{day}</p>
+                              <div key={day} className="icm-day-card">
+                                <div className="icm-day-card-header">{day}</div>
                                 {analytics.students.map((student: any) => {
                                   const rec = attendance.find((a: any) => a.student_id === student.student_id && a.slot === slot);
-                                  const isPresent = rec?.status === "present";
+                                  const status = rec?.status || null;
                                   return (
-                                    <div key={student.student_id} className="icm-check-row">
-                                      <input
-                                        type="checkbox"
-                                        checked={isPresent}
-                                        onChange={(e) => handleMarkAttendance(student.student_id, week, dayIndex, e.target.checked ? "present" : "absent")}
-                                      />
-                                      <span className="icm-check-name">{student.name}</span>
+                                    <div key={student.student_id} className="icm-student-attendance-row">
+                                      <span className="icm-attendance-name">{student.name}</span>
+                                      <div className="icm-attendance-buttons">
+                                        <button
+                                          className={`icm-attendance-btn ${status === "present" ? "present-active" : ""}`}
+                                          onClick={() => handleMarkAttendance(student.student_id, week, dayIndex, "present")}
+                                          title="Mark Present"
+                                        >
+                                          <Check size={14} style={{ display: "inline", marginRight: "4px" }} />
+                                          Present
+                                        </button>
+                                        <button
+                                          className={`icm-attendance-btn ${status === "absent" ? "absent-active" : ""}`}
+                                          onClick={() => handleMarkAttendance(student.student_id, week, dayIndex, "absent")}
+                                          title="Mark Absent"
+                                        >
+                                          <X size={14} style={{ display: "inline", marginRight: "4px" }} />
+                                          Absent
+                                        </button>
+                                      </div>
                                     </div>
                                   );
                                 })}
