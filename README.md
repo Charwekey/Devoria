@@ -1,11 +1,5 @@
-# Devoria
-Alright — let’s turn your project into a **clean, professional README that actually tells a story** (this will seriously impress reviewers 👀).
 
-You can copy this directly into your `README.md` 👇
-
----
-
-# 🚀 Devoria — A Transparent Learning Management System
+# 🚀 Devoria — A Transparent Virtual Learning Environment
 
 Devoria is a backend-powered Learning Management System that helps instructors manage classes efficiently while giving students real-time visibility into their attendance, assignments, and performance.
 
