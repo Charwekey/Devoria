@@ -1253,8 +1253,18 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                   {assignments.length === 0 ? (
                     <EmptyState icon={<Award size={24} />} title="No assignments yet" sub="Create an assignment first before grading submissions." />
                   ) : (
-                    assignments.map((assignment: any) => {
-                      const subs = submissions.filter((s: any) => s.assignment_id === assignment.id);
+                    // Sort assignments by deadline (most recent first)
+                    [...assignments].sort((a, b) => {
+                      const aDate = a.deadline ? new Date(a.deadline).getTime() : 0;
+                      const bDate = b.deadline ? new Date(b.deadline).getTime() : 0;
+                      return bDate - aDate; // Most recent first
+                    }).map((assignment: any) => {
+                      // Sort submissions by submitted_at (most recent first)
+                      const subs = [...submissions.filter((s: any) => s.assignment_id === assignment.id)].sort((a, b) => {
+                        const aDate = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
+                        const bDate = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
+                        return bDate - aDate; // Most recent first
+                      });
                       return (
                         <div key={assignment.id} className="icm-card" style={{ marginBottom: ".75rem" }}>
                           <div style={{ marginBottom: "1rem" }}>
