@@ -881,6 +881,7 @@ export default function InstructorClassManagement({ params }: { params: Promise<
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [materialForm, setMaterialForm] = useState({ title: "", description: "", material_type: "document" });
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
+  const [editingAssignment, setEditingAssignment] = useState<any>(null);
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [gradeForm, setGradeForm] = useState({ score: "", feedback: "" });
@@ -1061,6 +1062,38 @@ export default function InstructorClassManagement({ params }: { params: Promise<
       setMaterialForm({ title: "", description: "", material_type: "document" });
       setSelectedFile(null); setShowMaterialModal(false); setEditingMaterial(null); fetchClassData();
     } catch { toast.error("Failed to update material."); }
+    finally { setIsPosting(false); }
+  };
+
+  const openEditAssignmentModal = (assignment: any) => {
+    setEditingAssignment(assignment);
+    setAssnForm({
+      title: assignment.title,
+      description: assignment.description || "",
+      deadline: assignment.deadline ? new Date(assignment.deadline).toISOString().split('T')[0] : "",
+      is_final_project: assignment.is_final_project || false
+    });
+    setSelectedFile(null);
+    setShowCreateModal(true);
+  };
+
+  const handleUpdateAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAssignment) return;
+    setIsPosting(true);
+    try {
+      const updateData = {
+        title: assnForm.title,
+        description: assnForm.description,
+        deadline: assnForm.deadline,
+        is_final_project: assnForm.is_final_project ? 1 : 0
+      };
+      
+      await api.put(`/assignments/${editingAssignment.id}`, updateData);
+      toast.success("Assignment updated!");
+      setAssnForm({ title: "", description: "", deadline: "", is_final_project: false });
+      setSelectedFile(null); setShowCreateModal(false); setEditingAssignment(null); fetchClassData();
+    } catch { toast.error("Failed to update assignment."); }
     finally { setIsPosting(false); }
   };
 
@@ -1412,7 +1445,12 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                   {assignments.length === 0 ? (
                     <EmptyState icon={<Edit size={24} />} title="No assignments yet" sub="Create your first assignment to get students working." />
                   ) : (
-                    assignments.map((a: any) => (
+                    // Sort assignments by deadline (most recent first)
+                    [...assignments].sort((a, b) => {
+                      const aDate = a.deadline ? new Date(a.deadline).getTime() : 0;
+                      const bDate = b.deadline ? new Date(b.deadline).getTime() : 0;
+                      return bDate - aDate; // Most recent first
+                    }).map((a: any) => (
                       <div key={a.id} className="icm-card" style={{ marginBottom: ".75rem" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div style={{ flex: 1 }}>
@@ -1427,6 +1465,7 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                           </div>
                           <div style={{ display: "flex", gap: ".4rem", marginLeft: "1rem" }}>
                             <button className="icm-icon-btn" title="Download"><Download size={15} /></button>
+                            <button className="icm-icon-btn" title="Edit" onClick={() => openEditAssignmentModal(a)}><Edit size={15} /></button>
                             <button className="icm-icon-btn danger" title="Delete" onClick={() => deleteAssignment(a.id)}><Trash2 size={15} /></button>
                           </div>
                         </div>
@@ -1504,15 +1543,15 @@ export default function InstructorClassManagement({ params }: { params: Promise<
           </div>
         )}
 
-        {/* Create Assignment */}
+        {/* Create/Edit Assignment */}
         {showCreateModal && (
           <div className="icm-overlay">
             <div className="icm-modal">
               <div className="icm-modal-header">
-                <p className="icm-modal-title">New Assignment</p>
-                <button className="icm-close-btn" onClick={() => setShowCreateModal(false)}><X size={16} /></button>
+                <p className="icm-modal-title">{editingAssignment ? "Edit Assignment" : "New Assignment"}</p>
+                <button className="icm-close-btn" onClick={() => { setShowCreateModal(false); setEditingAssignment(null); setAssnForm({ title: "", description: "", deadline: "", is_final_project: false }); setSelectedFile(null); }}><X size={16} /></button>
               </div>
-              <form onSubmit={handleCreateAssignment}>
+              <form onSubmit={editingAssignment ? handleUpdateAssignment : handleCreateAssignment}>
                 <div className="icm-form-group">
                   <label className="icm-label">Title</label>
                   <input required className="icm-input" value={assnForm.title} onChange={e => setAssnForm({ ...assnForm, title: e.target.value })} placeholder="e.g., Build a REST API" />
@@ -1526,7 +1565,7 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                   <input required type="date" className="icm-input" value={assnForm.deadline} onChange={e => setAssnForm({ ...assnForm, deadline: e.target.value })} />
                 </div>
                 <div className="icm-form-group">
-                  <label className="icm-label">File (optional)</label>
+                  <label className="icm-label">File (optional{editingAssignment ? " - leave empty to keep current file" : ""})</label>
                   <input type="file" className="icm-input" style={{ paddingTop: "7px" }} onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
                 </div>
                 <div className="icm-form-group">
@@ -1536,8 +1575,8 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                   </label>
                 </div>
                 <div style={{ display: "flex", gap: ".75rem", marginTop: ".5rem" }}>
-                  <button type="button" className="icm-btn icm-btn-ghost" style={{ flex: 1 }} onClick={() => setShowCreateModal(false)}>Cancel</button>
-                  <button type="submit" disabled={isPosting} className="icm-btn icm-btn-primary" style={{ flex: 1 }}>{isPosting ? "Creating…" : "Create Assignment"}</button>
+                  <button type="button" className="icm-btn icm-btn-ghost" style={{ flex: 1 }} onClick={() => { setShowCreateModal(false); setEditingAssignment(null); setAssnForm({ title: "", description: "", deadline: "", is_final_project: false }); setSelectedFile(null); }}>Cancel</button>
+                  <button type="submit" disabled={isPosting} className="icm-btn icm-btn-primary" style={{ flex: 1 }}>{isPosting ? (editingAssignment ? "Updating…" : "Creating…") : (editingAssignment ? "Update Assignment" : "Create Assignment")}</button>
                 </div>
               </form>
             </div>
