@@ -47,3 +47,29 @@ def delete_material(
 ):
     materials_service = MaterialsService(db)
     return materials_service.delete_material(user, material_id)
+
+#  UPDATE MATERIAL (Instructor)
+@router.put("/{material_id}")
+def update_material(
+    material_id: str,
+    title: str = Form(None),
+    description: str = Form(None),
+    material_type: str = Form(None),
+    file: UploadFile = File(None),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    materials_service = MaterialsService(db)
+    
+    file_url = None
+    if file:
+        file_url = upload_file(file, "materials")
+    
+    return materials_service.update_material(
+        user,
+        material_id=material_id,
+        title=title,
+        description=description,
+        material_type=material_type,
+        file_url=file_url
+    )

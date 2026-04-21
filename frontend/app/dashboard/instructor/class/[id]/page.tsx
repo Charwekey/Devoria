@@ -880,6 +880,7 @@ export default function InstructorClassManagement({ params }: { params: Promise<
   const [assnForm, setAssnForm] = useState({ title: "", description: "", deadline: "", is_final_project: false });
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [materialForm, setMaterialForm] = useState({ title: "", description: "", material_type: "document" });
+  const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [gradeForm, setGradeForm] = useState({ score: "", feedback: "" });
@@ -1021,6 +1022,45 @@ export default function InstructorClassManagement({ params }: { params: Promise<
       setMaterialForm({ title: "", description: "", material_type: "document" });
       setSelectedFile(null); setShowMaterialModal(false); fetchClassData();
     } catch { toast.error("Failed to upload material."); }
+    finally { setIsPosting(false); }
+  };
+
+  const openEditMaterialModal = (material: any) => {
+    setEditingMaterial(material);
+    setMaterialForm({
+      title: material.title,
+      description: material.description || "",
+      material_type: material.material_type
+    });
+    setSelectedFile(null);
+    setShowMaterialModal(true);
+  };
+
+  const handleDownloadMaterial = (material: any) => {
+    if (material.file_url) {
+      window.open(material.file_url, '_blank');
+    } else {
+      toast.error("No file available for download.");
+    }
+  };
+
+  const handleUpdateMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMaterial) return;
+    setIsPosting(true);
+    try {
+      const formData = new FormData();
+      formData.append("title", materialForm.title);
+      formData.append("description", materialForm.description);
+      formData.append("material_type", materialForm.material_type);
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+      await api.put(`/materials/${editingMaterial.id}`, formData, { headers: { "Content-Type": "multipart/form-data" } });
+      toast.success("Material updated!");
+      setMaterialForm({ title: "", description: "", material_type: "document" });
+      setSelectedFile(null); setShowMaterialModal(false); setEditingMaterial(null); fetchClassData();
+    } catch { toast.error("Failed to update material."); }
     finally { setIsPosting(false); }
   };
 
@@ -1346,7 +1386,8 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                             </div>
                           </div>
                           <div style={{ display: "flex", gap: ".4rem", marginLeft: "1rem" }}>
-                            <button className="icm-icon-btn" title="Download"><Download size={15} /></button>
+                            <button className="icm-icon-btn" title="View/Download" onClick={() => handleDownloadMaterial(m)}><Download size={15} /></button>
+                            <button className="icm-icon-btn" title="Edit" onClick={() => openEditMaterialModal(m)}><Edit size={15} /></button>
                             <button className="icm-icon-btn danger" title="Delete" onClick={() => deleteMaterial(m.id)}><Trash2 size={15} /></button>
                           </div>
                         </div>
@@ -1503,15 +1544,15 @@ export default function InstructorClassManagement({ params }: { params: Promise<
           </div>
         )}
 
-        {/* Upload Material */}
+        {/* Upload/Edit Material */}
         {showMaterialModal && (
           <div className="icm-overlay">
             <div className="icm-modal">
               <div className="icm-modal-header">
-                <p className="icm-modal-title">Upload Course Material</p>
-                <button className="icm-close-btn" onClick={() => setShowMaterialModal(false)}><X size={16} /></button>
+                <p className="icm-modal-title">{editingMaterial ? "Edit Course Material" : "Upload Course Material"}</p>
+                <button className="icm-close-btn" onClick={() => { setShowMaterialModal(false); setEditingMaterial(null); setMaterialForm({ title: "", description: "", material_type: "document" }); setSelectedFile(null); }}><X size={16} /></button>
               </div>
-              <form onSubmit={handleCreateMaterial}>
+              <form onSubmit={editingMaterial ? handleUpdateMaterial : handleCreateMaterial}>
                 <div className="icm-form-group">
                   <label className="icm-label">Title</label>
                   <input required className="icm-input" value={materialForm.title} onChange={e => setMaterialForm({ ...materialForm, title: e.target.value })} placeholder="e.g., Week 1 Slides" />
@@ -1531,11 +1572,11 @@ export default function InstructorClassManagement({ params }: { params: Promise<
                   </select>
                 </div>
                 <div className="icm-form-group">
-                  <label className="icm-label">File</label>
+                  <label className="icm-label">File {editingMaterial && "(optional - leave empty to keep current file)"}</label>
                   <input type="file" className="icm-input" style={{ paddingTop: "7px" }} accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.mov,.avi,.mp3,.wav" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
                 </div>
-                <button type="submit" disabled={isPosting} className="icm-btn icm-btn-primary" style={{ width: "100%" }}>
-                  {isPosting ? "Uploading…" : "Upload Material"}
+                <button type="submit" disabled={isPosting || (!editingMaterial && !selectedFile)} className="icm-btn icm-btn-primary" style={{ width: "100%" }}>
+                  {isPosting ? (editingMaterial ? "Updating…" : "Uploading…") : (editingMaterial ? "Update Material" : "Upload Material")}
                 </button>
               </form>
             </div>

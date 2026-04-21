@@ -73,3 +73,37 @@ class MaterialsService:
         self.session.commit()
         
         return {"message": "Material deleted successfully"}
+
+    def update_material(self, user, material_id, title=None, description=None, material_type=None, file_url=None):
+        """Update a course material"""
+        
+        material = self.session.query(Material).filter_by(id=material_id).first()
+        if not material:
+            raise HTTPException(status_code=404, detail="Material not found")
+
+        # Check if user is the instructor of the class
+        class_obj = self.session.query(Class).filter_by(id=material.class_id).first()
+        if class_obj.instructor_id != user.id:
+            raise HTTPException(status_code=403, detail="Only the instructor can update materials")
+
+        # Update fields if provided
+        if title is not None:
+            material.title = title
+        if description is not None:
+            material.description = description
+        if material_type is not None:
+            material.material_type = material_type
+        if file_url is not None:
+            material.file_url = file_url
+
+        self.session.commit()
+        
+        return {
+            "id": material.id,
+            "title": material.title,
+            "description": material.description,
+            "material_type": material.material_type,
+            "file_url": material.file_url,
+            "created_at": material.created_at.isoformat() if material.created_at else None,
+            "updated_at": material.updated_at.isoformat() if material.updated_at else None
+        }
