@@ -712,6 +712,14 @@ export default function StudentClassDashboard({ params }: { params: Promise<{ id
                                       <textarea
                                         required
                                         className="scd-textarea"
+                                        placeholder="Deployment Link"
+                                        rows={3}
+                                        value={submissionForm.demo_link}
+                                        onChange={(e) => setSubmissionForm({ ...submissionForm, demo_link: e.target.value })}
+                                      />
+                                      <textarea
+                                        required
+                                        className="scd-textarea"
                                         placeholder="Summary of tech stack and approach…"
                                         rows={3}
                                         value={submissionForm.project_description}
