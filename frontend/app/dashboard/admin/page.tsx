@@ -430,7 +430,10 @@ export default function AdminDashboard() {
       toast.success("Email whitelisted");
       setNewEmail("");
       fetchData();
-    } catch { toast.error("Whitelist failed"); }
+    } catch (error: any) {
+      const message = error.response?.data?.detail || "Failed to add to whitelist";
+      toast.error(message);
+    }
   };
 
   const handleRemoveWhitelist = async (email: string) => {

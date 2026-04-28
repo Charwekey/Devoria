@@ -3,12 +3,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from services.submissions_services import SubmissionService
 from utils.dependancies import get_current_user, get_db
+from typing import Optional
 
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
 
 class SubmissionGrade(BaseModel):
     grade: str
-    feedback: str
+    feedback: Optional[str] = None
 
 
 #  SUBMIT ASSIGNMENT (Student)
