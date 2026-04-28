@@ -32,7 +32,7 @@ from sqlalchemy import text
 from utils.connections import engine
 from models.base import Base
 
-# Automatic Database Migration Check
+# Automatic Database Migration Check (PostgreSQL Compatible)
 def ensure_schema_sync():
     try:
         with engine.connect() as connection:
@@ -42,7 +42,7 @@ def ensure_schema_sync():
             connection.commit()
             print("Successfully added missing 'status' column.")
     except Exception as e:
-        if "Duplicate column name" not in str(e) and "1060" not in str(e):
+        if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
             print(f"Schema sync warning (class_student): {e}")
 
     # Assignments Table Sync
@@ -50,12 +50,12 @@ def ensure_schema_sync():
         with engine.connect() as connection:
             print("Syncing 'assignments' table...")
             # Change description to TEXT
-            connection.execute(text("ALTER TABLE assignments MODIFY description TEXT"))
+            connection.execute(text("ALTER TABLE assignments ALTER COLUMN description TYPE TEXT"))
             # Add preview_url if missing
             try:
                 connection.execute(text("ALTER TABLE assignments ADD COLUMN preview_url VARCHAR(255)"))
             except Exception as e:
-                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
                     raise e
             connection.commit()
             print("Successfully synced 'assignments' table.")
@@ -69,7 +69,7 @@ def ensure_schema_sync():
             try:
                 connection.execute(text("ALTER TABLE classes ADD COLUMN total_classes INT DEFAULT 24"))
             except Exception as e:
-                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
                     raise e
             connection.commit()
             print("Successfully synced 'classes' table.")
@@ -83,7 +83,7 @@ def ensure_schema_sync():
             try:
                 connection.execute(text("ALTER TABLE attendance ADD COLUMN slot INT NULL"))
             except Exception as e:
-                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
                     raise e
             connection.commit()
             print("Successfully synced 'attendance' table.")
@@ -98,19 +98,19 @@ def ensure_schema_sync():
             try:
                 connection.execute(text("ALTER TABLE submissions ADD COLUMN submission_file_url VARCHAR(255) NULL"))
             except Exception as e:
-                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
                     raise e
             
             # Add submitted_at if missing
             try:
-                connection.execute(text("ALTER TABLE submissions ADD COLUMN submitted_at DATETIME NULL"))
+                connection.execute(text("ALTER TABLE submissions ADD COLUMN submitted_at TIMESTAMP NULL"))
             except Exception as e:
-                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
                     raise e
             
-            # Modify submission_link to be optional
+            # Modify submission_link to be optional (PostgreSQL syntax)
             try:
-                connection.execute(text("ALTER TABLE submissions MODIFY COLUMN submission_link VARCHAR(255) NULL"))
+                connection.execute(text("ALTER TABLE submissions ALTER COLUMN submission_link DROP NOT NULL"))
             except Exception as e:
                 print(f"Submissions sync Link Nullable Warning: {e}")
 
@@ -125,15 +125,15 @@ def ensure_schema_sync():
             print("Syncing 'materials' table...")
             # Add missing columns if needed
             try:
-                connection.execute(text("ALTER TABLE materials ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"))
+                connection.execute(text("ALTER TABLE materials ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
             except Exception as e:
-                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
                     pass  # Column likely already exists
             
             try:
-                connection.execute(text("ALTER TABLE materials ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+                connection.execute(text("ALTER TABLE materials ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
             except Exception as e:
-                if "Duplicate column name" not in str(e) and "1060" not in str(e):
+                if "already exists" not in str(e) and "duplicate column" not in str(e).lower():
                     pass  # Column likely already exists
             
             connection.commit()

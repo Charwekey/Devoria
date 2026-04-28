@@ -1,5 +1,6 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv
 import os
 from models.base import Base
@@ -10,8 +11,19 @@ load_dotenv()
 #connection string is private
 #dotenv purpose is to store database credentials
 #inside.env, stuff are stored in key value pairs.
+#Expected format: postgresql://username:password@localhost:5432/database_name
 connection_str = os.environ.get("DATABASE_URL")
-engine = create_engine(connection_str, pool_pre_ping=True)
+
+if not connection_str:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
+# PostgreSQL connection with connection pooling optimizations
+engine = create_engine(
+    connection_str,
+    pool_pre_ping=True,
+    echo=False,  # Set to True for SQL debugging
+    poolclass=NullPool if "fly.io" in connection_str else None  # Use NullPool for serverless environments
+)
 
 
 try:

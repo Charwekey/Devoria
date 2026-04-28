@@ -1,4 +1,5 @@
-.env
+.env.example
 datavenv/
 env/
 __pycache__/
+POSTGRES_MIGRATION/
