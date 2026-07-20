@@ -1,4 +1,9 @@
-
+<!-- PORTFOLIO
+category: Web App
+tags: Next.js , Python
+description: Devoria is a backend-powered Learning Management System that helps instructors manage classes efficiently while giving students real-time visibility into their attendance, assignments, and performance.
+featured: true
+-->
 # 🚀 Devoria — A Transparent Virtual Learning Environment
 
 Devoria is a backend-powered Learning Management System that helps instructors manage classes efficiently while giving students real-time visibility into their attendance, assignments, and performance.
